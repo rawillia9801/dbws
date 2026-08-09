@@ -22,7 +22,12 @@ Production website for [dogbreederweb.site](https://dogbreederweb.site), built w
 ```text
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+PAYPAL_CLIENT_ID=your_paypal_client_id
+PAYPAL_CLIENT_SECRET=your_paypal_client_secret
+PAYPAL_ENVIRONMENT=sandbox
 ```
+
+Use `PAYPAL_ENVIRONMENT=live` for production. The client secret is used only by server-side route handlers and must never be prefixed with `NEXT_PUBLIC_`.
 
 Only the Supabase publishable key is used. A service-role or secret key must never be exposed to the browser or committed.
 

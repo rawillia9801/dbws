@@ -18,6 +18,10 @@ import {
 import { BrowserPreview } from "@/components/browser-preview";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { PayPalCheckout } from "@/components/paypal-checkout";
+import { formatPackagePrice, templatePackages } from "@/lib/pricing";
+
+export const dynamic = "force-dynamic";
 
 const values = [
   [Globe2, "Custom Domain"],
@@ -66,22 +70,28 @@ const styles = [
     type: "Warm, established, editorial",
     image: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=88",
     className: "style-heritage",
+    packageId: "heritage",
   },
   {
     name: "Modern Meadow",
     type: "Clean, organic, welcoming",
     image: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&w=900&q=88",
     className: "style-meadow",
+    packageId: "modern-meadow",
   },
   {
     name: "Signature",
     type: "Polished, refined, distinctive",
     image: "https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?auto=format&fit=crop&w=900&q=88",
     className: "style-signature",
+    packageId: "signature",
   },
 ] as const;
 
 export default function Home() {
+  const paypalClientId = process.env.PAYPAL_CLIENT_ID ?? "";
+  const paypalEnvironment = process.env.PAYPAL_ENVIRONMENT === "sandbox" ? "sandbox" : "live";
+
   return (
     <>
       <Header />
@@ -96,7 +106,7 @@ export default function Home() {
                 <Link className="button button-primary" href="#styles">Explore Website Styles</Link>
                 <Link className="button button-outline" href="#examples">See Live Examples</Link>
               </div>
-              <p className="hero-note"><span>Custom .com</span><span>Hosting included</span><span>Two professional email addresses</span></p>
+              <p className="hero-note"><span>Custom .com available</span><span>Managed hosting</span><span>Two professional email addresses</span></p>
             </div>
             <BrowserPreview />
           </div>
@@ -141,7 +151,7 @@ export default function Home() {
                     <small>KENNEL NAME</small>
                     <h3>{style.name}</h3>
                     <p>{style.type}</p>
-                    <span>View style <ArrowRight size={15} /></span>
+                    <span>From {formatPackagePrice(templatePackages.find((item) => item.id === style.packageId)?.price ?? "0")} <ArrowRight size={15} /></span>
                   </div>
                 </article>
               ))}
@@ -176,14 +186,30 @@ export default function Home() {
         <section className="section pricing-section" id="pricing">
           <div className="shell pricing-shell">
             <div className="section-heading centered light-heading">
-              <p className="eyebrow">SIMPLE, PERSONAL SERVICE</p>
-              <h2>Everything needed to launch with confidence</h2>
-              <p>Every website is planned around your breeding program. We will confirm the exact scope and price before work begins.</p>
+              <p className="eyebrow">CLEAR TEMPLATE PRICING</p>
+              <h2>Choose your website foundation</h2>
+              <p>Purchase your template securely with PayPal. Each listed price is a one-time charge, with no automatic subscription added at checkout.</p>
             </div>
-            <div className="included-grid">
-              {["Custom visual design", "Your own .com domain", "Secure managed hosting", "Two professional email addresses", "Mobile-first layout", "Inquiry and application forms", "Puppy and litter pages", "Launch support"].map(item => <div key={item}><Check size={17} />{item}</div>)}
+            <div className="pricing-grid">
+              {templatePackages.map((templatePackage) => (
+                <article className={`pricing-card${templatePackage.featured ? " featured" : ""}`} key={templatePackage.id}>
+                  {templatePackage.featured && <span className="popular-badge">MOST POPULAR</span>}
+                  <p className="pricing-eyebrow">{templatePackage.eyebrow}</p>
+                  <h3>{templatePackage.name}</h3>
+                  <div className="price"><strong>{formatPackagePrice(templatePackage.price)}</strong><span>one time</span></div>
+                  <p className="pricing-description">{templatePackage.description}</p>
+                  <ul>
+                    {templatePackage.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}
+                  </ul>
+                  <PayPalCheckout packageId={templatePackage.id} clientId={paypalClientId} environment={paypalEnvironment} />
+                </article>
+              ))}
             </div>
-            <Link className="button button-copper" href="/start">Request Your Website <ArrowRight size={18} /></Link>
+            <div className="care-plan">
+              <div><strong>Website care after launch</strong><span>Secure managed hosting, custom .com domain, SSL, and two professional email addresses.</span></div>
+              <p><strong>$17.95</strong><span>/ month, billed separately</span></p>
+            </div>
+            <p className="pricing-fineprint">Need a different scope? <Link href="/start">Request a custom website plan.</Link></p>
           </div>
         </section>
 
