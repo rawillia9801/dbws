@@ -17,6 +17,7 @@ export function Footer() {
         </div>
         <div>
           <h3>Get started</h3>
+          <Link href="/builder">Open Website Studio</Link>
           <Link href="/start">Request Your Website</Link>
           <a href="mailto:hello@dogbreederweb.site">hello@dogbreederweb.site</a>
         </div>

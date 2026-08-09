@@ -103,7 +103,7 @@ export default function Home() {
               <h1>Your breeding program deserves a website this beautiful.</h1>
               <p className="hero-lead">Custom, mobile-ready websites that showcase your dogs, upcoming litters, available puppies, and the care behind your program.</p>
               <div className="button-row">
-                <Link className="button button-primary" href="#styles">Explore Website Styles</Link>
+                <Link className="button button-primary" href="/builder">Build Your Website</Link>
                 <Link className="button button-outline" href="#examples">See Live Examples</Link>
               </div>
               <p className="hero-note"><span>Custom .com available</span><span>Managed hosting</span><span>Two professional email addresses</span></p>
@@ -151,7 +151,8 @@ export default function Home() {
                     <small>KENNEL NAME</small>
                     <h3>{style.name}</h3>
                     <p>{style.type}</p>
-                    <span>From {formatPackagePrice(templatePackages.find((item) => item.id === style.packageId)?.price ?? "0")} <ArrowRight size={15} /></span>
+                    <span>From {formatPackagePrice(templatePackages.find((item) => item.id === style.packageId)?.price ?? "0")}</span>
+                    <Link className="style-builder-link" href={`/builder?template=${style.packageId}`}>Edit this template <ArrowRight size={15} /></Link>
                   </div>
                 </article>
               ))}
@@ -216,7 +217,7 @@ export default function Home() {
         <section className="section final-cta">
           <div className="shell final-cta-inner">
             <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Give your breeding program a home online.</h2></div>
-            <Link className="button button-primary" href="/start">Start Your Website <ArrowRight size={18} /></Link>
+            <Link className="button button-primary" href="/builder">Open the Website Studio <ArrowRight size={18} /></Link>
           </div>
         </section>
       </main>

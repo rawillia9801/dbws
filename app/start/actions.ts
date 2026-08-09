@@ -35,7 +35,7 @@ export async function submitInquiry(_: InquiryState, formData: FormData): Promis
     return { status: "error", message: parsed.error.issues[0]?.message ?? "Please review the form and try again." };
   }
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   if (!supabase) {
     return { status: "error", message: "The inquiry form is being connected. Please email hello@dogbreederweb.site for now." };
   }
