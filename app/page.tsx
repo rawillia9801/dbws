@@ -2,16 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
-  CalendarDays,
+  Bot,
   Check,
+  Code2,
   FileText,
+  FormInput,
   Globe2,
-  HeartHandshake,
-  ImageIcon,
   Mail,
   MonitorSmartphone,
-  PencilLine,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -19,79 +18,59 @@ import { BrowserPreview } from "@/components/browser-preview";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { PayPalCheckout } from "@/components/paypal-checkout";
-import { formatPackagePrice, templatePackages } from "@/lib/pricing";
+import { formatPrice, websiteAddOns, websitePlan } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
 const values = [
-  [Globe2, "Custom Domain"],
+  [Bot, "Claude AI Builder"],
   [MonitorSmartphone, "Mobile Ready"],
-  [PencilLine, "Easy Puppy Updates"],
-  [Mail, "Professional Email"],
-  [ShieldCheck, "Secure Hosting"],
+  [RefreshCw, "Live Puppy Updates"],
+  [Mail, "Two Business Emails"],
+  [ShieldCheck, "Managed Hosting"],
 ] as const;
 
 const features = [
   {
-    icon: HeartHandshake,
-    title: "Showcase Your Program",
-    text: "Tell your story, introduce your dogs, and explain the care and purpose behind your breeding program.",
+    icon: Bot,
+    title: "Build by conversation",
+    text: "Tell Claude about your program, your voice, and the families you want to reach. It builds and revises the editable site in a live preview.",
   },
   {
-    icon: ImageIcon,
-    title: "Present Puppies Beautifully",
-    text: "Give every available puppy and upcoming litter an organized, photo-first presentation families can trust.",
+    icon: RefreshCw,
+    title: "Publish puppies and litters",
+    text: "Connected WhiteLabel data keeps available puppies and litter information current without maintaining a second set of listings.",
   },
   {
-    icon: BadgeCheck,
-    title: "Build Buyer Confidence",
-    text: "Answer important questions, share health information, and guide serious families toward the right next step.",
+    icon: FormInput,
+    title: "Applications that flow inward",
+    text: "Create a breeder-specific application, publish it on the site, and bring each submission into the breeder workflow for review.",
   },
   {
-    icon: FileText,
-    title: "Applications That Fit",
-    text: "Collect structured buyer inquiries through a polished application that feels like part of your website.",
+    icon: Code2,
+    title: "Embeds and public feeds",
+    text: "Use ready-to-paste puppy and application sections—or a structured public feed—when part of the website needs to live elsewhere.",
   },
   {
-    icon: CalendarDays,
-    title: "Litter Announcements",
-    text: "Keep visitors informed about planned pairings, expected litters, and availability without a cluttered page.",
+    icon: Globe2,
+    title: "Your address and brand",
+    text: "Launch on an included breeder subdomain, connect a domain you already own, and control colors, photography, content, and contact details.",
   },
   {
-    icon: Sparkles,
-    title: "A Brand That Feels Like You",
-    text: "Colors, typography, photography, and language are shaped around your kennel—not forced into a generic template.",
+    icon: Mail,
+    title: "Hosting and business email",
+    text: "Managed Vercel hosting, SSL, updates, and two branded business email addresses are part of the plan—not a surprise after launch.",
   },
 ] as const;
 
-const styles = [
-  {
-    name: "Heritage",
-    type: "Warm, established, editorial",
-    image: "https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=88",
-    className: "style-heritage",
-    packageId: "heritage",
-  },
-  {
-    name: "Modern Meadow",
-    type: "Clean, organic, welcoming",
-    image: "https://images.unsplash.com/photo-1507146426996-ef05306b995a?auto=format&fit=crop&w=900&q=88",
-    className: "style-meadow",
-    packageId: "modern-meadow",
-  },
-  {
-    name: "Signature",
-    type: "Polished, refined, distinctive",
-    image: "https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?auto=format&fit=crop&w=900&q=88",
-    className: "style-signature",
-    packageId: "signature",
-  },
+const aiChanges = [
+  "Rewrote the hero around health-tested Goldens",
+  "Added the fall litter announcement",
+  "Changed the brand palette to evergreen and cream",
+  "Made the application the primary call to action",
 ] as const;
 
 export default function Home() {
-  const paypalClientId = process.env.PAYPAL_CLIENT_ID ?? "";
-  const paypalEnvironment = process.env.PAYPAL_ENVIRONMENT === "sandbox" ? "sandbox" : "live";
-
   return (
     <>
       <Header />
@@ -99,14 +78,14 @@ export default function Home() {
         <section className="hero">
           <div className="shell hero-grid">
             <div className="hero-copy">
-              <p className="eyebrow">WEBSITES MADE FOR DOG BREEDERS</p>
-              <h1>Your breeding program deserves a website this beautiful.</h1>
-              <p className="hero-lead">Custom, mobile-ready websites that showcase your dogs, upcoming litters, available puppies, and the care behind your program.</p>
+              <p className="eyebrow">THE AI WEBSITE BUILDER FOR DOG BREEDERS</p>
+              <h1>Describe your program. Claude builds the website.</h1>
+              <p className="hero-lead">One editable website system for your kennel—connected puppies, litters, applications, hosting, SSL, and business email included.</p>
               <div className="button-row">
-                <Link className="button button-primary" href="/builder">Build Your Website</Link>
-                <Link className="button button-outline" href="#examples">See Live Examples</Link>
+                <Link className="button button-primary" href="/builder">Build With Claude <Sparkles size={17} /></Link>
+                <Link className="button button-outline" href="#pricing">See the One Plan</Link>
               </div>
-              <p className="hero-note"><span>Custom .com available</span><span>Managed hosting</span><span>Two professional email addresses</span></p>
+              <p className="hero-note"><span>$17.95/month</span><span>No template package to buy</span><span>Optional add-ons only when needed</span></p>
             </div>
             <BrowserPreview />
           </div>
@@ -121,9 +100,9 @@ export default function Home() {
         <section className="section" id="features">
           <div className="shell">
             <div className="section-heading centered">
-              <p className="eyebrow">EVERYTHING YOUR WEBSITE NEEDS</p>
-              <h2>Built around the way breeders actually work</h2>
-              <p>Your website should do more than look pretty. It should make your program easier to understand and easier to trust.</p>
+              <p className="eyebrow">THE WHITELABEL WEB MODULE, IN ONE PRODUCT</p>
+              <h2>Your public website and breeder workflow stay connected</h2>
+              <p>The site is not a decorative template purchase. It is the public-facing part of your breeder system, with the information families need and the tools you need to keep it current.</p>
             </div>
             <div className="feature-grid">
               {features.map(({ icon: Icon, title, text }) => (
@@ -137,25 +116,40 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="section section-tinted" id="styles">
-          <div className="shell">
-            <div className="section-heading split-heading">
-              <div><p className="eyebrow">CHOOSE YOUR DIRECTION</p><h2>A website style that fits your program</h2></div>
-              <p>Start with a carefully designed visual direction, then make it yours with your photos, dogs, colors, and story.</p>
+        <section className="section ai-builder-section" id="builder">
+          <div className="shell ai-builder-grid">
+            <div className="ai-builder-copy">
+              <p className="eyebrow">NO TEMPLATE PICKER</p>
+              <h2>Build the site you describe—not one of three packages.</h2>
+              <p>Start with your kennel details, then work with Claude like a creative partner. Ask for a warmer voice, a stronger health-testing section, a litter announcement, a new color direction, or a full redesign. Every result stays structured, editable, previewable, and publishable.</p>
+              <ul>
+                <li><Check size={18} />Conversational design and copy changes</li>
+                <li><Check size={18} />Manual controls for every important field</li>
+                <li><Check size={18} />Desktop and mobile live preview</li>
+                <li><Check size={18} />Drafts, publishing, and version history in Supabase</li>
+              </ul>
+              <Link className="button button-primary" href="/builder">Open the AI Website Builder <ArrowRight size={17} /></Link>
             </div>
-            <div className="styles-grid">
-              {styles.map((style) => (
-                <article className={`style-card ${style.className}`} key={style.name}>
-                  <div className="style-image"><Image src={style.image} alt={`${style.name} dog breeder website style`} fill sizes="(max-width: 760px) 100vw, 33vw" /></div>
-                  <div className="style-browser">
-                    <small>KENNEL NAME</small>
-                    <h3>{style.name}</h3>
-                    <p>{style.type}</p>
-                    <span>From {formatPackagePrice(templatePackages.find((item) => item.id === style.packageId)?.price ?? "0")}</span>
-                    <Link className="style-builder-link" href={`/builder?template=${style.packageId}`}>Edit this template <ArrowRight size={15} /></Link>
+            <div className="ai-builder-demo" aria-label="Claude website builder preview">
+              <header><span><Bot size={18} />Claude website copilot</span><em>LIVE</em></header>
+              <div className="ai-demo-body">
+                <div className="ai-demo-chat">
+                  <p className="ai-demo-user">Make this feel established and welcoming. Feature our fall litter and make health testing easier to find.</p>
+                  <div className="ai-demo-reply">
+                    <strong><Sparkles size={15} />Done. I updated four parts of the site.</strong>
+                    <ul>{aiChanges.map((change) => <li key={change}><Check size={12} />{change}</li>)}</ul>
                   </div>
-                </article>
-              ))}
+                  <span>Ask Claude to change anything… <ArrowRight size={14} /></span>
+                </div>
+                <div className="ai-demo-preview">
+                  <div className="ai-demo-browser"><i /><i /><i /><small>cedarcreek.dogbreederweb.site</small></div>
+                  <div className="ai-demo-site">
+                    <nav><b>CEDAR &amp; CREEK</b><span>Our Dogs&nbsp;&nbsp; Litters&nbsp;&nbsp; Apply</span></nav>
+                    <section><small>HEALTH-TESTED GOLDEN RETRIEVERS</small><h3>Raised with purpose.<br />Matched with care.</h3><p>Thoughtful Golden Retrievers raised in the heart of Virginia.</p><button>Meet our fall litter</button></section>
+                    <footer><b>Fall litter now planned</b><span>Applications are open for prepared families.</span></footer>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -163,23 +157,23 @@ export default function Home() {
         <section className="section comparison" id="examples">
           <div className="shell comparison-grid">
             <div className="comparison-copy">
-              <p className="eyebrow">DESIGNED FOR THE FULL STORY</p>
-              <h2>Not another one-page puppy listing</h2>
-              <p>Families want to understand who you are before they ask about a puppy. We create a complete home for your program.</p>
+              <p className="eyebrow">ONE RECORD, TWO SURFACES</p>
+              <h2>Update the breeder record. Publish the right parts.</h2>
+              <p>Your private breeder data stays protected. The public website receives only the puppy, litter, application, and program information you choose to publish.</p>
               <ul>
                 {[
-                  "Your dogs, pedigrees, and health testing",
-                  "Available puppies and planned litters",
-                  "Your application and placement process",
-                  "Policies, FAQs, testimonials, and contact details",
-                  "A polished experience on phones, tablets, and computers",
+                  "Available puppies automatically leave the public feed when assigned",
+                  "Applications arrive in the breeder workflow for review",
+                  "Dogs, health testing, litters, and policies stay presentation-ready",
+                  "Embeds can connect an existing website to the same data",
+                  "Every public page remains polished on phones and computers",
                 ].map((item) => <li key={item}><Check size={18} />{item}</li>)}
               </ul>
-              <Link className="text-link" href="/start">Tell us about your program <ArrowRight size={17} /></Link>
+              <Link className="text-link" href="/builder">Build the public experience <ArrowRight size={17} /></Link>
             </div>
             <div className="editorial-card">
               <Image src="https://images.unsplash.com/photo-1558788353-f76d92427f16?auto=format&fit=crop&w=1100&q=90" alt="Dog outdoors representing a professional breeder website" fill sizes="(max-width: 850px) 100vw, 46vw" />
-              <div><span>YOUR PROGRAM</span><strong>Presented with the care it deserves.</strong></div>
+              <div><span>YOUR PROGRAM</span><strong>One clear, connected home online.</strong></div>
             </div>
           </div>
         </section>
@@ -187,37 +181,60 @@ export default function Home() {
         <section className="section pricing-section" id="pricing">
           <div className="shell pricing-shell">
             <div className="section-heading centered light-heading">
-              <p className="eyebrow">CLEAR TEMPLATE PRICING</p>
-              <h2>Choose your website foundation</h2>
-              <p>Purchase your template securely with PayPal. Each listed price is a one-time charge, with no automatic subscription added at checkout.</p>
+              <p className="eyebrow">ONE PLAN. OPTIONAL ADD-ONS.</p>
+              <h2>The whole breeder website system is the plan.</h2>
+              <p>No paid template levels. Subscribe for the AI builder and the complete hosted web layer, then add only the launch or communication services your kennel actually needs.</p>
             </div>
-            <div className="pricing-grid">
-              {templatePackages.map((templatePackage) => (
-                <article className={`pricing-card${templatePackage.featured ? " featured" : ""}`} key={templatePackage.id}>
-                  {templatePackage.featured && <span className="popular-badge">MOST POPULAR</span>}
-                  <p className="pricing-eyebrow">{templatePackage.eyebrow}</p>
-                  <h3>{templatePackage.name}</h3>
-                  <div className="price"><strong>{formatPackagePrice(templatePackage.price)}</strong><span>one time</span></div>
-                  <p className="pricing-description">{templatePackage.description}</p>
-                  <ul>
-                    {templatePackage.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}
-                  </ul>
-                  <PayPalCheckout packageId={templatePackage.id} clientId={paypalClientId} environment={paypalEnvironment} />
+            <div className="single-plan-layout">
+              <article className="pricing-card website-plan-card">
+                <p className="pricing-eyebrow">{websitePlan.eyebrow}</p>
+                <h3>{websitePlan.name}</h3>
+                <div className="price"><strong>{formatPrice(websitePlan.price)}</strong><span>/ month</span></div>
+                <p className="pricing-description">{websitePlan.description}</p>
+                <ul>
+                  {websitePlan.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}
+                </ul>
+                <PayPalCheckout />
+              </article>
+              <aside className="plan-explainer">
+                <span><FileText size={22} /></span>
+                <div>
+                  <p className="pricing-eyebrow">WHAT “CONNECTED” MEANS</p>
+                  <h3>Made for the WhiteLabel breeder workflow</h3>
+                  <p>Dog Breeder Web is the focused website segment: public pages, puppy and litter publishing, applications, embeds, domains, hosting, and email. The private operational records remain in the same Supabase-backed breeder system.</p>
+                  <dl>
+                    <div><dt>Included address</dt><dd>yourkennel.dogbreederweb.site</dd></div>
+                    <div><dt>Hosting stack</dt><dd>Vercel + SSL + managed updates</dd></div>
+                    <div><dt>Business email</dt><dd>Two branded addresses</dd></div>
+                    <div><dt>Data connection</dt><dd>Puppies, litters, applications, and embeds</dd></div>
+                  </dl>
+                </div>
+              </aside>
+            </div>
+
+            <div className="addons-heading">
+              <p className="eyebrow">OPTIONAL ADD-ONS</p>
+              <h3>Add human setup, a new domain, custom work, or Business Voice only when you want it.</h3>
+            </div>
+            <div className="addons-grid">
+              {websiteAddOns.map((addOn) => (
+                <article className="addon-card" key={addOn.id}>
+                  <h4>{addOn.name}</h4>
+                  <strong>{addOn.price}</strong>
+                  <small>{addOn.recurring}</small>
+                  <p>{addOn.description}</p>
+                  <Link href={`/start?service=${addOn.id}`}>Request add-on <ArrowRight size={15} /></Link>
                 </article>
               ))}
             </div>
-            <div className="care-plan">
-              <div><strong>Website care after launch</strong><span>Secure managed hosting, custom .com domain, SSL, and two professional email addresses.</span></div>
-              <p><strong>$17.95</strong><span>/ month, billed separately</span></p>
-            </div>
-            <p className="pricing-fineprint">Need a different scope? <Link href="/start">Request a custom website plan.</Link></p>
+            <p className="pricing-fineprint">Already own a domain? Connecting it is supported. Premium domain purchases and metered voice usage are priced separately.</p>
           </div>
         </section>
 
         <section className="section final-cta">
           <div className="shell final-cta-inner">
-            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Give your breeding program a home online.</h2></div>
-            <Link className="button button-primary" href="/builder">Open the Website Studio <ArrowRight size={18} /></Link>
+            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Build the website with Claude, then make every detail yours.</h2></div>
+            <Link className="button button-primary" href="/builder">Open the AI Website Builder <ArrowRight size={18} /></Link>
           </div>
         </section>
       </main>

@@ -7,18 +7,18 @@ export function Footer() {
       <div className="shell footer-grid">
         <div>
           <Logo />
-          <p>Beautiful, professional websites made specifically for dog breeders.</p>
+          <p>AI-built, breeder-editable websites connected to the public web layer of your breeder system.</p>
         </div>
         <div>
           <h3>Explore</h3>
-          <Link href="/#styles">Website Styles</Link>
+          <Link href="/#builder">AI Website Builder</Link>
           <Link href="/#features">Features</Link>
-          <Link href="/#examples">Examples</Link>
+          <Link href="/#examples">Connected Web</Link>
         </div>
         <div>
           <h3>Get started</h3>
-          <Link href="/builder">Open Website Studio</Link>
-          <Link href="/start">Request Your Website</Link>
+          <Link href="/builder">Build With Claude</Link>
+          <Link href="/#pricing">One Plan + Add-ons</Link>
           <a href="mailto:hello@dogbreederweb.site">hello@dogbreederweb.site</a>
         </div>
       </div>

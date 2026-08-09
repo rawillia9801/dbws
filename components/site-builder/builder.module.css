@@ -37,13 +37,10 @@
 .field input, .field textarea { width: 100%; padding: 9px 10px; color: #19382a; background: #fafbf9; border: 1px solid #dce2dc; border-radius: 6px; font-size: 11px; line-height: 1.45; }
 .field textarea { min-height: 82px; resize: vertical; }
 .field input:focus, .field textarea:focus, .composer textarea:focus { outline: 2px solid #b6d0bd; border-color: #6e9a7a; }
-.templateList { display: grid; gap: 7px; }
-.templateList button { padding: 8px; display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 9px; text-align: left; background: #fff; border: 1px solid #dfe4df; border-radius: 7px; cursor: pointer; }
-.templateList button > span { width: 42px; height: 35px; border-radius: 4px; }
-.templateList button div { display: grid; }
-.templateList button strong { font-size: 10px; }
-.templateList button small { color: #7b867f; font-size: 9px; }
-.templateList .selectedTemplate { border-color: #4c7a5c; box-shadow: 0 0 0 1px #4c7a5c; }
+.styleIntro { margin: 14px; padding: 13px; display: flex; align-items: flex-start; gap: 9px; color: #284c37; background: #edf5ee; border: 1px solid #cadbcd; border-radius: 8px; }
+.styleIntro > svg { flex: 0 0 auto; margin-top: 1px; color: #ad653b; }
+.styleIntro strong { display: block; font-size: 10px; }
+.styleIntro p { margin: 4px 0 0; color: #607168; font-size: 9px; line-height: 1.5; }
 .colorField, .switchField { min-height: 39px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #edf0ed; }
 .colorField > span { flex: 1; }
 .colorField input { width: 28px; height: 28px; padding: 2px; border: 1px solid #d9dfd9; border-radius: 5px; }
@@ -99,4 +96,3 @@
   .previewArea { min-height: 700px; }
   .copilot { left: 12px; right: 12px; bottom: 12px; width: auto; height: 430px; }
 }
-

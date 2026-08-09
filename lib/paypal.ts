@@ -1,53 +1,24 @@
 import { z } from "zod";
-import type { TemplatePackageId } from "@/lib/pricing";
-import { getTemplatePackage } from "@/lib/pricing";
-
-const createOrderResponseSchema = z.object({
-  id: z.string().min(1),
-});
-
-const captureOrderResponseSchema = z.object({
-  id: z.string().min(1),
-  status: z.string(),
-  payment_source: z
-    .object({
-      paypal: z
-        .object({
-          name: z
-            .object({
-              given_name: z.string().optional(),
-            })
-            .optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-  purchase_units: z.array(
-    z.object({
-      reference_id: z.string().optional(),
-      custom_id: z.string().optional(),
-      payments: z
-        .object({
-          captures: z.array(
-            z.object({
-              status: z.string(),
-              amount: z.object({
-                currency_code: z.string(),
-                value: z.string(),
-              }),
-            }),
-          ),
-        })
-        .optional(),
-    }),
-  ),
-});
+import { websitePlan } from "@/lib/pricing";
 
 type PayPalErrorBody = {
   debug_id?: string;
   message?: string;
-  name?: string;
+  details?: Array<{ description?: string }>;
 };
+
+type PayPalProduct = { id: string; name?: string };
+type PayPalPlan = { id: string; name?: string; status?: string };
+
+const subscriptionSchema = z.object({
+  id: z.string().min(1),
+  plan_id: z.string().min(1),
+  status: z.string().min(1),
+  subscriber: z.object({
+    name: z.object({ given_name: z.string().optional() }).optional(),
+    email_address: z.string().optional(),
+  }).optional(),
+});
 
 export class PayPalError extends Error {
   constructor(
@@ -61,8 +32,8 @@ export class PayPalError extends Error {
 }
 
 function getPayPalConfig() {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  const clientId = process.env.PAYPAL_CLIENT_ID?.trim();
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET?.trim();
 
   if (!clientId || !clientSecret) {
     throw new PayPalError("PayPal checkout is not configured.", 503);
@@ -71,9 +42,10 @@ function getPayPalConfig() {
   const environment = process.env.PAYPAL_ENVIRONMENT === "sandbox" ? "sandbox" : "live";
   return {
     clientId,
+    environment,
     clientSecret,
     baseUrl: environment === "sandbox" ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com",
-  };
+  } as const;
 }
 
 async function getAccessToken() {
@@ -98,96 +70,115 @@ async function getAccessToken() {
   return { accessToken: body.access_token, baseUrl };
 }
 
-async function paypalRequest(path: string, init: RequestInit, requestId = crypto.randomUUID()) {
+async function paypalRequest<T>(path: string, init: RequestInit = {}, requestId?: string) {
   const { accessToken, baseUrl } = await getAccessToken();
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-      "PayPal-Request-Id": requestId,
-      ...init.headers,
-    },
-    cache: "no-store",
-  });
-  const body = (await response.json().catch(() => ({}))) as PayPalErrorBody;
+  const headers = new Headers(init.headers);
+  headers.set("Accept", "application/json");
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  if (init.body) headers.set("Content-Type", "application/json");
+  if (requestId) headers.set("PayPal-Request-Id", requestId);
 
+  const response = await fetch(`${baseUrl}${path}`, { ...init, headers, cache: "no-store" });
+  const body = (await response.json().catch(() => ({}))) as T & PayPalErrorBody;
   if (!response.ok) {
-    throw new PayPalError(body.message || "PayPal could not process this request.", response.status, body.debug_id);
+    const detail = body.details?.find((item) => item.description)?.description;
+    throw new PayPalError(detail || body.message || "PayPal could not process this request.", response.status, body.debug_id);
   }
-
   return body;
 }
 
-export async function createPayPalOrder(packageId: TemplatePackageId) {
-  const templatePackage = getTemplatePackage(packageId);
-  if (!templatePackage) {
-    throw new PayPalError("Unknown website package.", 400);
-  }
+async function ensureProduct() {
+  const productName = "Dog Breeder Web Website Plan";
+  const listed = await paypalRequest<{ products?: PayPalProduct[] }>("/v1/catalogs/products?page_size=100&total_required=true");
+  const existing = listed.products?.find((product) => product.name === productName && product.id);
+  if (existing?.id) return existing.id;
 
-  const body = await paypalRequest("/v2/checkout/orders", {
-    method: "POST",
-    body: JSON.stringify({
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          reference_id: templatePackage.id,
-          custom_id: templatePackage.id,
-          description: `${templatePackage.name} dog breeder website template`,
-          amount: {
-            currency_code: "USD",
-            value: templatePackage.price,
-          },
-        },
-      ],
-      payment_source: {
-        paypal: {
-          experience_context: {
-            brand_name: "Dog Breeder Web",
-            shipping_preference: "NO_SHIPPING",
-            user_action: "PAY_NOW",
-          },
-        },
-      },
-    }),
-  });
-
-  return createOrderResponseSchema.parse(body);
-}
-
-export async function capturePayPalOrder(orderId: string, packageId: TemplatePackageId) {
-  const templatePackage = getTemplatePackage(packageId);
-  if (!templatePackage) {
-    throw new PayPalError("Unknown website package.", 400);
-  }
-
-  const body = await paypalRequest(
-    `/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`,
+  const created = await paypalRequest<PayPalProduct>(
+    "/v1/catalogs/products",
     {
       method: "POST",
-      body: "{}",
+      body: JSON.stringify({
+        name: productName,
+        description: "AI breeder website builder, managed hosting, SSL, and two branded business emails.",
+        type: "SERVICE",
+      }),
     },
-    `dbws-capture-${orderId}`,
+    "dbws-website-product-v1",
   );
-  const order = captureOrderResponseSchema.parse(body);
-  const purchaseUnit = order.purchase_units.find(
-    (unit) => unit.reference_id === templatePackage.id || unit.custom_id === templatePackage.id,
-  );
-  const completedCapture = purchaseUnit?.payments?.captures.find((capture) => capture.status === "COMPLETED");
+  if (!created.id) throw new PayPalError("PayPal did not return a product ID.", 502);
+  return created.id;
+}
 
-  if (
-    order.status !== "COMPLETED" ||
-    !completedCapture ||
-    completedCapture.amount.currency_code !== "USD" ||
-    completedCapture.amount.value !== templatePackage.price
-  ) {
-    throw new PayPalError("The captured payment did not match the selected package.", 422);
+let websitePlanPromise: Promise<string> | null = null;
+
+async function createOrFindWebsitePlan() {
+  const productId = await ensureProduct();
+  const planName = "Dog Breeder Web Monthly";
+  const listed = await paypalRequest<{ plans?: PayPalPlan[] }>(`/v1/billing/plans?product_id=${encodeURIComponent(productId)}&page_size=20`);
+  const existing = listed.plans?.find((plan) => plan.name === planName && plan.id && plan.status !== "INACTIVE");
+  if (existing?.id) return existing.id;
+
+  const created = await paypalRequest<PayPalPlan>(
+    "/v1/billing/plans",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        product_id: productId,
+        name: planName,
+        description: websitePlan.description,
+        billing_cycles: [
+          {
+            frequency: { interval_unit: "MONTH", interval_count: 1 },
+            tenure_type: "REGULAR",
+            sequence: 1,
+            total_cycles: 0,
+            pricing_scheme: { fixed_price: { value: websitePlan.price, currency_code: "USD" } },
+          },
+        ],
+        payment_preferences: {
+          auto_bill_outstanding: true,
+          payment_failure_threshold: 3,
+        },
+      }),
+    },
+    "dbws-website-monthly-plan-v1",
+  );
+  if (!created.id) throw new PayPalError("PayPal did not return a billing plan ID.", 502);
+  return created.id;
+}
+
+export async function getWebsitePlanId() {
+  websitePlanPromise ??= createOrFindWebsitePlan().catch((error) => {
+    websitePlanPromise = null;
+    throw error;
+  });
+  return websitePlanPromise;
+}
+
+export function getPayPalClientConfig() {
+  const { clientId, environment } = getPayPalConfig();
+  return { clientId, environment };
+}
+
+export async function verifyWebsiteSubscription(subscriptionId: string) {
+  if (!/^I-[A-Z0-9]+$/i.test(subscriptionId)) {
+    throw new PayPalError("This PayPal subscription is not valid.", 400);
+  }
+
+  const expectedPlanId = await getWebsitePlanId();
+  const body = await paypalRequest<unknown>(`/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`);
+  const subscription = subscriptionSchema.parse(body);
+  if (subscription.plan_id !== expectedPlanId) {
+    throw new PayPalError("This subscription does not match the Dog Breeder Web plan.", 409);
+  }
+  if (!["APPROVAL_PENDING", "APPROVED", "ACTIVE"].includes(subscription.status.toUpperCase())) {
+    throw new PayPalError("PayPal has not approved this subscription.", 409);
   }
 
   return {
-    orderId: order.id,
-    status: order.status,
-    firstName: order.payment_source?.paypal?.name?.given_name,
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    firstName: subscription.subscriber?.name?.given_name,
+    email: subscription.subscriber?.email_address,
   };
 }

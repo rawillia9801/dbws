@@ -18,11 +18,11 @@ export default function StartPage() {
           <section className="start-copy">
             <p className="eyebrow">START YOUR WEBSITE</p>
             <h1>Let’s build a website worthy of your program.</h1>
-            <p>Share a few details about your dogs, your current online presence, and what you need. We will review everything before recommending a direction.</p>
+            <p>Share a few details about your dogs, your current online presence, and any optional launch help you need. The website plan stays the same; this form is for human setup and add-on requests.</p>
             <div className="start-points">
-              <div><Check size={19} />No generic one-size-fits-all design</div>
-              <div><Check size={19} />Clear scope and pricing before work begins</div>
-              <div><Check size={19} />Built for Vercel, Supabase, and your own domain</div>
+              <div><Check size={19} />One $17.95/month website plan</div>
+              <div><Check size={19} />Clear add-on scope before any extra work begins</div>
+              <div><Check size={19} />Built on Vercel and the same Supabase breeder data</div>
             </div>
           </section>
           <InquiryForm />

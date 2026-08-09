@@ -1,58 +1,58 @@
-export const templatePackages = [
+export const websitePlan = {
+  id: "website-monthly",
+  name: "Dog Breeder Web",
+  eyebrow: "One complete website plan",
+  price: "17.95",
+  interval: "month",
+  description: "The public website layer from the WhiteLabel breeder platform, rebuilt around an interactive Claude website builder.",
+  features: [
+    "Interactive Claude AI website builder",
+    "Managed Vercel hosting, SSL, and updates",
+    "Two branded business email addresses",
+    "Included kennel subdomain",
+    "Connected available-puppy and litter publishing",
+    "Editable puppy application and contact forms",
+    "Embeddable puppy, litter, and application sections",
+    "Mobile-ready pages, brand controls, and version history",
+  ],
+} as const;
+
+export const websiteAddOns = [
   {
-    id: "heritage",
-    name: "Heritage",
-    eyebrow: "A polished beginning",
-    price: "149.00",
-    description: "A warm, editorial template for established programs that want a trustworthy online home.",
-    featured: false,
-    features: [
-      "Five essential website pages",
-      "Mobile-ready breeder layout",
-      "Puppy inquiry contact form",
-      "Launch questionnaire and checklist",
-    ],
+    id: "brand-launch",
+    name: "Brand Launch",
+    price: "$149 setup",
+    recurring: "$29/year after the first year",
+    description: "Registration of an available standard .com with DNS and SSL configuration handled for you.",
   },
   {
-    id: "modern-meadow",
-    name: "Modern Meadow",
-    eyebrow: "Most popular",
-    price: "299.00",
-    description: "A welcoming, personalized site with the pages breeders use most often.",
-    features: [
-      "Everything in Heritage",
-      "Personalized colors and typography",
-      "Available puppy and litter pages",
-      "Structured family application form",
-    ],
-    featured: true,
+    id: "website-personalization",
+    name: "Done-for-you personalization",
+    price: "$299 one time",
+    recurring: "No recurring design fee",
+    description: "A human-assisted launch using your kennel identity, photography, content, colors, and connected breeder information.",
   },
   {
-    id: "signature",
-    name: "Signature",
-    eyebrow: "The complete presentation",
-    price: "499.00",
-    description: "An expanded, distinctive website for programs with a deeper story and more content.",
-    featured: false,
-    features: [
-      "Everything in Modern Meadow",
-      "Expanded custom design direction",
-      "Up to ten launch-ready pages",
-      "Content placement and launch review",
-    ],
+    id: "custom-website",
+    name: "Ground-up custom website",
+    price: "From $749",
+    recurring: "Scoped before work begins",
+    description: "Custom page planning and design beyond the supported AI builder, with connected breeder data where appropriate.",
+  },
+  {
+    id: "business-voice",
+    name: "Business Voice",
+    price: "$69 setup",
+    recurring: "$8.99/month or $99/year, plus usage",
+    description: "A local business number with your greeting, business hours, voicemail, routing, and custom phone menu.",
   },
 ] as const;
 
-export type TemplatePackageId = (typeof templatePackages)[number]["id"];
-
-export function getTemplatePackage(packageId: string) {
-  return templatePackages.find((templatePackage) => templatePackage.id === packageId);
-}
-
-export function formatPackagePrice(price: string) {
+export function formatPrice(price: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(Number(price));
 }

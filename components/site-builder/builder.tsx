@@ -17,8 +17,8 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import type { BuilderResponse, SiteConfig, TemplateId } from "@/lib/site-builder/schema";
-import { cloneConfig, siteTemplates } from "@/lib/site-builder/templates";
+import type { BuilderResponse, SiteConfig } from "@/lib/site-builder/schema";
+import { cloneConfig } from "@/lib/site-builder/templates";
 import { SiteRenderer } from "./site-renderer";
 import styles from "./builder.module.css";
 
@@ -33,9 +33,9 @@ type BuilderProps = {
 };
 
 const starterPrompts = [
-  "Make the copy warmer and more family-focused.",
-  "Rewrite this for a preservation breeder with a confident voice.",
-  "Create a polished upcoming-litter announcement.",
+  "Redesign the whole site to feel warm, established, and family-focused.",
+  "Build a confident preservation-breeder story around health and purpose.",
+  "Feature our next litter and make the application the primary action.",
 ];
 
 function slugify(value: string) {
@@ -74,15 +74,6 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
   function updateAbout<K extends keyof SiteConfig["about"]>(key: K, value: SiteConfig["about"][K]) {
     setConfig((current) => ({ ...current, about: { ...current.about, [key]: value } }));
     setSource("manual");
-  }
-
-  function chooseTemplate(id: TemplateId) {
-    const selected = siteTemplates.find((template) => template.id === id);
-    if (!selected) return;
-    setConfig(cloneConfig(selected.config));
-    if (!siteId) setSlug(slugify(selected.config.brand.name));
-    setSource("manual");
-    setNotice(`${selected.name} template applied.`);
   }
 
   function addDog() {
@@ -160,7 +151,7 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
   return (
     <main className={styles.builder}>
       <header className={styles.topbar}>
-        <Link className={styles.builderBrand} href="/"><span>DBW</span><div><strong>Dog Breeder Web</strong><small>Website studio</small></div></Link>
+        <Link className={styles.builderBrand} href="/"><span>DBW</span><div><strong>Dog Breeder Web</strong><small>AI website builder</small></div></Link>
         <div className={styles.siteIdentity}>
           <label>Website address<span>dogbreederweb.site/sites/</span><input value={slug} onChange={(event) => setSlug(slugify(event.target.value))} aria-label="Website address" /></label>
         </div>
@@ -181,15 +172,7 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
 
           {panel === "style" ? (
             <div className={styles.controlBody}>
-              <ControlSection title="Template">
-                <div className={styles.templateList}>
-                  {siteTemplates.map((template) => (
-                    <button className={config.templateId === template.id ? styles.selectedTemplate : ""} key={template.id} onClick={() => chooseTemplate(template.id)}>
-                      <span style={{ background: template.config.theme.primary }} /><div><strong>{template.name}</strong><small>{template.description}</small></div>{config.templateId === template.id && <Check size={16} />}
-                    </button>
-                  ))}
-                </div>
-              </ControlSection>
+              <div className={styles.styleIntro}><Sparkles size={18} /><div><strong>Your site is not locked to a template.</strong><p>Set exact colors here or ask Claude to rethink the complete visual direction in the conversation panel.</p></div></div>
               <ControlSection title="Colors" icon={<Palette size={15} />}>
                 {(Object.keys(config.theme) as Array<keyof SiteConfig["theme"]>).map((key) => (
                   <label className={styles.colorField} key={key}><span>{key}</span><input type="color" value={config.theme[key]} onChange={(event) => { setConfig((current) => ({ ...current, theme: { ...current.theme, [key]: event.target.value } })); setSource("manual"); }} /><code>{config.theme[key]}</code></label>

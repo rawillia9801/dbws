@@ -8,13 +8,12 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const metadata: Metadata = { title: "Website Studio" };
 export const dynamic = "force-dynamic";
 
-export default async function BuilderPage({ searchParams }: { searchParams: Promise<{ template?: string }> }) {
-  const params = await searchParams;
+export default async function BuilderPage() {
   const supabase = await createServerSupabaseClient();
+  const startingPoint = getTemplate("modern-meadow");
 
   if (!supabase) {
-    const template = getTemplate(params.template);
-    return <Builder initialConfig={cloneConfig(template.config)} initialSiteId={null} initialSlug="my-breeder-site" initialPublished={false} userEmail="Preview mode" />;
+    return <Builder initialConfig={cloneConfig(startingPoint.config)} initialSiteId={null} initialSlug="my-breeder-site" initialPublished={false} userEmail="Preview mode" />;
   }
 
   const { data: authData } = await supabase.auth.getUser();
@@ -29,8 +28,7 @@ export default async function BuilderPage({ searchParams }: { searchParams: Prom
     .maybeSingle();
 
   const savedConfig = siteConfigSchema.safeParse(site?.config);
-  const template = getTemplate(params.template);
-  const initialConfig = savedConfig.success ? savedConfig.data : cloneConfig(template.config);
+  const initialConfig = savedConfig.success ? savedConfig.data : cloneConfig(startingPoint.config);
   const initialSlug = site?.slug ?? `${authData.user.email?.split("@")[0]?.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "my-kennel"}-site`;
 
   const { data: publishedSite } = site
@@ -47,4 +45,3 @@ export default async function BuilderPage({ searchParams }: { searchParams: Prom
     />
   );
 }
-

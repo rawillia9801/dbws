@@ -12,7 +12,7 @@ export function InquiryForm() {
   return (
     <form className="inquiry-form" action={action}>
       <h2>Tell us about your program</h2>
-      <p className="form-intro">We will use these details to recommend the right website direction and prepare your next steps.</p>
+      <p className="form-intro">We will use these details to prepare your launch or confirm the add-on you requested. The core website plan does not change.</p>
       <div className="form-grid">
         <div className="field">
           <label htmlFor="name">Your name</label>

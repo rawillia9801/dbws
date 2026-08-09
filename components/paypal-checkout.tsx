@@ -3,49 +3,42 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
-import type { TemplatePackageId } from "@/lib/pricing";
 
 type PaymentStatus = "loading" | "ready" | "processing" | "success" | "error";
 
-type PayPalPaymentSession = {
-  start: (
-    options: { presentationMode: "auto" },
-    order: Promise<{ orderId: string }>,
-  ) => Promise<void>;
-};
-
-type PayPalInstance = {
-  findEligibleMethods: (options: { currencyCode: string }) => Promise<{
-    isEligible: (method: string) => boolean;
-  }>;
-  createPayPalOneTimePaymentSession: (options: {
-    onApprove: (data: { orderId: string }) => Promise<void>;
-    onCancel: () => void;
-    onError: () => void;
-  }) => PayPalPaymentSession;
+type PayPalButtons = {
+  render: (target: HTMLElement) => Promise<void>;
+  close: () => Promise<void>;
 };
 
 type PayPalWindow = Window & {
   paypal?: {
-    createInstance: (options: {
-      clientId: string;
-      components: string[];
-      pageType: "home";
-    }) => Promise<PayPalInstance>;
+    Buttons: (options: {
+      style: { color: "gold"; label: "subscribe"; layout: "vertical"; shape: "rect" };
+      createSubscription: (_data: unknown, actions: { subscription: { create: (input: { plan_id: string }) => Promise<string> } }) => Promise<string>;
+      onApprove: (data: { subscriptionID?: string }) => Promise<void>;
+      onCancel: () => void;
+      onError: (error: unknown) => void;
+    }) => PayPalButtons;
   };
 };
 
 let paypalScriptPromise: Promise<void> | null = null;
 
-function loadPayPalScript(environment: "live" | "sandbox") {
+function loadPayPalScript(clientId: string) {
   if ((window as PayPalWindow).paypal) return Promise.resolve();
   if (paypalScriptPromise) return paypalScriptPromise;
 
   paypalScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = environment === "sandbox"
-      ? "https://www.sandbox.paypal.com/web-sdk/v6/core"
-      : "https://www.paypal.com/web-sdk/v6/core";
+    const query = new URLSearchParams({
+      "client-id": clientId,
+      components: "buttons",
+      currency: "USD",
+      intent: "subscription",
+      vault: "true",
+    });
+    script.src = `https://www.paypal.com/sdk/js?${query.toString()}`;
     script.async = true;
     script.onload = () => resolve();
     script.onerror = () => reject(new Error("PayPal could not be loaded."));
@@ -60,82 +53,60 @@ async function readError(response: Response, fallback: string) {
   return body.error || fallback;
 }
 
-export function PayPalCheckout({
-  packageId,
-  clientId,
-  environment,
-}: {
-  packageId: TemplatePackageId;
-  clientId: string;
-  environment: "live" | "sandbox";
-}) {
+export function PayPalCheckout() {
   const buttonHost = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<PaymentStatus>(clientId ? "loading" : "error");
-  const [message, setMessage] = useState(clientId ? "Loading secure checkout…" : "Checkout is being connected.");
+  const [status, setStatus] = useState<PaymentStatus>("loading");
+  const [message, setMessage] = useState("Preparing secure monthly checkout…");
 
   useEffect(() => {
-    if (!clientId || !buttonHost.current) return;
+    if (!buttonHost.current) return;
 
     let active = true;
+    let buttons: PayPalButtons | null = null;
     const host = buttonHost.current;
-
-    async function createOrder() {
-      setStatus("processing");
-      setMessage("Opening PayPal…");
-      const response = await fetch("/api/paypal/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId }),
-      });
-
-      if (!response.ok) throw new Error(await readError(response, "Checkout could not be started."));
-      const order = (await response.json()) as { id: string };
-      return { orderId: order.id };
-    }
-
-    async function captureOrder(orderId: string) {
-      setMessage("Completing your purchase…");
-      const response = await fetch(`/api/paypal/orders/${encodeURIComponent(orderId)}/capture`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId }),
-      });
-
-      if (!response.ok) throw new Error(await readError(response, "Payment could not be completed."));
-      const result = (await response.json()) as { firstName?: string };
-      if (!active) return;
-      setStatus("success");
-      setMessage(result.firstName ? `Thank you, ${result.firstName}. Your template is reserved.` : "Payment complete. Your template is reserved.");
-    }
 
     async function initialize() {
       try {
-        await loadPayPalScript(environment);
+        const configResponse = await fetch("/api/paypal/subscription", { cache: "no-store" });
+        if (!configResponse.ok) throw new Error(await readError(configResponse, "PayPal checkout is being connected."));
+        const config = (await configResponse.json()) as { clientId: string; environment: "live" | "sandbox"; planId: string };
+        await loadPayPalScript(config.clientId);
         const paypal = (window as PayPalWindow).paypal;
         if (!paypal) throw new Error("PayPal checkout is unavailable.");
 
-        const instance = await paypal.createInstance({
-          clientId,
-          components: ["paypal-payments"],
-          pageType: "home",
-        });
-        const methods = await instance.findEligibleMethods({ currencyCode: "USD" });
-        if (!methods.isEligible("paypal")) throw new Error("PayPal is not available for this browser.");
-
-        const paymentSession = instance.createPayPalOneTimePaymentSession({
-          onApprove: async ({ orderId }) => {
+        buttons = paypal.Buttons({
+          style: { color: "gold", label: "subscribe", layout: "vertical", shape: "rect" },
+          createSubscription: async (_data, actions) => {
+            if (active) {
+              setStatus("processing");
+              setMessage("Opening PayPal subscription approval…");
+            }
+            return actions.subscription.create({ plan_id: config.planId });
+          },
+          onApprove: async ({ subscriptionID }) => {
             try {
-              await captureOrder(orderId);
+              if (!subscriptionID) throw new Error("PayPal did not return a subscription ID.");
+              if (active) setMessage("Confirming your website plan…");
+              const response = await fetch("/api/paypal/subscription", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subscriptionId: subscriptionID }),
+              });
+              if (!response.ok) throw new Error(await readError(response, "The subscription could not be confirmed."));
+              const result = (await response.json()) as { firstName?: string };
+              if (!active) return;
+              setStatus("success");
+              setMessage(result.firstName ? `You’re subscribed, ${result.firstName}.` : "Your website plan is active.");
             } catch (error) {
               if (!active) return;
               setStatus("error");
-              setMessage(error instanceof Error ? error.message : "Payment could not be completed.");
+              setMessage(error instanceof Error ? error.message : "The subscription could not be confirmed.");
             }
           },
           onCancel: () => {
             if (!active) return;
             setStatus("ready");
-            setMessage("Checkout canceled. You have not been charged.");
+            setMessage("Checkout canceled. No subscription was started.");
           },
           onError: () => {
             if (!active) return;
@@ -144,24 +115,10 @@ export function PayPalCheckout({
           },
         });
 
-        const paypalButton = document.createElement("paypal-button");
-        paypalButton.setAttribute("type", "pay");
-        paypalButton.setAttribute("color", "gold");
-        paypalButton.setAttribute("aria-label", "Pay with PayPal");
-        paypalButton.addEventListener("click", async () => {
-          try {
-            await paymentSession.start({ presentationMode: "auto" }, createOrder());
-          } catch (error) {
-            if (!active) return;
-            setStatus("error");
-            setMessage(error instanceof Error ? error.message : "PayPal could not be opened.");
-          }
-        });
-
-        host.replaceChildren(paypalButton);
+        await buttons.render(host);
         if (active) {
           setStatus("ready");
-          setMessage("Secure one-time checkout powered by PayPal.");
+          setMessage("$17.95 billed monthly through PayPal. Cancel anytime in PayPal.");
         }
       } catch (error) {
         if (!active) return;
@@ -173,9 +130,10 @@ export function PayPalCheckout({
     void initialize();
     return () => {
       active = false;
+      void buttons?.close().catch(() => undefined);
       host.replaceChildren();
     };
-  }, [clientId, environment, packageId]);
+  }, []);
 
   if (status === "success") {
     return (
@@ -183,7 +141,7 @@ export function PayPalCheckout({
         <CheckCircle2 size={22} />
         <div>
           <strong>{message}</strong>
-          <Link href="/start">Send your website details →</Link>
+          <Link href="/login?next=/builder">Sign in and build your website →</Link>
         </div>
       </div>
     );
@@ -191,12 +149,12 @@ export function PayPalCheckout({
 
   return (
     <div className="paypal-checkout">
-      <div className="paypal-button-host" ref={buttonHost} aria-label="Pay with PayPal" />
+      <div className="paypal-button-host" ref={buttonHost} aria-label="Subscribe with PayPal" />
       <p className={`checkout-status ${status}`} role="status" aria-live="polite">
         {(status === "loading" || status === "processing") && <LoaderCircle className="spin" size={14} />}
         {message}
       </p>
-      {status === "error" && <Link className="checkout-fallback" href="/start">Request this template instead</Link>}
+      {status === "error" && <Link className="checkout-fallback" href="/start?service=website-plan">Request the website plan</Link>}
     </div>
   );
 }
