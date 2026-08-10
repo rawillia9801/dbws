@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { provisionConnectedPlatform } from "@/lib/connected-platform";
 import { DomainValidationError, normalizeComDomain } from "@/lib/domain";
 import {
   getPayPalClientConfig,
@@ -27,7 +28,10 @@ function paymentError(error: unknown) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
 
-  console.error("PayPal website subscription failed unexpectedly", error instanceof Error ? { name: error.name } : undefined);
+  console.error(
+    "PayPal website subscription failed unexpectedly",
+    error instanceof Error ? { name: error.name, message: error.message } : undefined,
+  );
   return NextResponse.json({ error: "PayPal checkout is temporarily unavailable." }, { status: 500 });
 }
 
@@ -38,32 +42,14 @@ async function connectSubscriptionToSignedInBreeder(subscription: Awaited<Return
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) return false;
 
-  const { error } = await supabase.from("website_subscriptions").upsert({
-    owner_id: authData.user.id,
-    paypal_subscription_id: subscription.subscriptionId,
-    paypal_plan_id: subscription.planId,
-    paypal_status: subscription.status,
-    requested_domain: subscription.requestedDomain,
-    purchaser_email: subscription.email ?? authData.user.email ?? null,
-    setup_fee_cents: 8900,
-    monthly_price_cents: 2000,
-    annual_domain_renewal_cents: 3900,
-    domain_renewal_billed_separately: true,
-  }, { onConflict: "paypal_subscription_id" });
-
-  if (error) {
-    console.error("Verified website subscription could not be connected to breeder", { code: error.code });
-    throw new PayPalError("Your PayPal subscription was approved, but we could not connect it to your breeder account.", 500);
-  }
-
-  const { error: kennelError } = await supabase.from("kennels").update({
-    custom_domain: subscription.requestedDomain,
-    domain_status: "pending",
-  }).eq("owner_auth_user_id", authData.user.id);
-
-  if (kennelError) {
-    console.warn("Verified domain could not be attached to an existing kennel record", { code: kennelError.code });
-  }
+  await provisionConnectedPlatform({
+    userId: authData.user.id,
+    email: authData.user.email,
+    kennelName: typeof authData.user.user_metadata?.kennel_name === "string"
+      ? authData.user.user_metadata.kennel_name
+      : undefined,
+    subscription,
+  });
 
   return true;
 }
@@ -86,6 +72,7 @@ export async function GET() {
         setupFeeFailureAction: plan.setupFeeFailureAction,
         annualDomainRenewal: websitePlan.domainRenewal,
         annualDomainRenewalBilling: "separate",
+        connectedAccess: ["dogbreederweb", "mydogportal", "dogbreederdocs"],
       },
       { headers: { "Cache-Control": "no-store" } },
     );
