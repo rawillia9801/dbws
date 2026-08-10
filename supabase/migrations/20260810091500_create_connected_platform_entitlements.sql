@@ -20,7 +20,7 @@ create index if not exists platform_entitlements_kennel_idx
 
 alter table public.platform_entitlements enable row level security;
 revoke all on public.platform_entitlements from anon;
-revoke insert, update, delete on public.platform_entitlements from authenticated;
+revoke all on public.platform_entitlements from authenticated;
 grant select on public.platform_entitlements to authenticated;
 
 drop policy if exists "platform_entitlements_select_own" on public.platform_entitlements;
