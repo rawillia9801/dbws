@@ -7,18 +7,10 @@ const VERCEL_API = "https://api.vercel.com";
 
 type Verification = { type?: string; domain?: string; value?: string };
 type ProjectDomainResult = { verified?: boolean; verification?: Verification[]; error?: { message?: string }; message?: string };
-type DomainConfig = {
-  misconfigured?: boolean;
-  recommendedCNAME?: Array<{ rank?: number; value?: string }> | string[];
-  recommendedIPv4?: Array<{ rank?: number; value?: string }> | string[];
-  error?: { message?: string };
-};
+type DomainConfig = { misconfigured?: boolean; recommendedCNAME?: Array<{ rank?: number; value?: string }> | string[]; recommendedIPv4?: Array<{ rank?: number; value?: string }> | string[]; error?: { message?: string } };
 
 export class VercelDomainError extends Error {
-  constructor(message: string, public readonly status: number) {
-    super(message);
-    this.name = "VercelDomainError";
-  }
+  constructor(message: string, public readonly status: number) { super(message); this.name = "VercelDomainError"; }
 }
 
 function config() {
@@ -65,20 +57,20 @@ export async function attachDomainToDogBreederWeb(input: string) {
 
   const apex = await addDomain(domain);
   await addDomain(`www.${domain}`, domain);
+  await addDomain(`mail.${domain}`);
 
   const domainConfig = await vercelRequest<DomainConfig>(`/v6/domains/${encodeURIComponent(domain)}/config?${query}`);
   const apexTarget = firstRecommendation(domainConfig.recommendedIPv4) || "76.76.21.21";
-  const wwwTarget = firstRecommendation(domainConfig.recommendedCNAME) || "cname.vercel-dns-0.com";
+  const cnameTarget = firstRecommendation(domainConfig.recommendedCNAME) || "cname.vercel-dns-0.com";
 
   const verificationRecords = (apex.verification || []).filter((record) => record.type && record.domain && record.value);
   const zone = [
     { name: "@", type: "A", ttl: 300, records: [{ content: apexTarget }] },
-    { name: "www", type: "CNAME", ttl: 300, records: [{ content: wwwTarget }] },
+    { name: "www", type: "CNAME", ttl: 300, records: [{ content: cnameTarget }] },
+    { name: "mail", type: "CNAME", ttl: 300, records: [{ content: cnameTarget }] },
     ...verificationRecords.map((record) => ({
       name: String(record.domain).replace(`.${domain}`, "").replace(/\.$/, "") || "@",
-      type: String(record.type).toUpperCase(),
-      ttl: 300,
-      records: [{ content: String(record.value) }],
+      type: String(record.type).toUpperCase(), ttl: 300, records: [{ content: String(record.value) }],
     })),
   ];
   await updateDomainDns(domain, zone);
@@ -89,5 +81,5 @@ export async function attachDomainToDogBreederWeb(input: string) {
     if (!(error instanceof VercelDomainError) || ![400, 409].includes(error.status)) throw error;
   }
 
-  return { domain, apexTarget, wwwTarget, verificationRecords, configured: true };
+  return { domain, apexTarget, cnameTarget, mailShortcut: `https://mail.${domain}`, verificationRecords, configured: true };
 }
