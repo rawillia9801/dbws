@@ -6,13 +6,24 @@ import { submitInquiry, type InquiryState } from "@/app/start/actions";
 
 const initialState: InquiryState = { status: "idle", message: "" };
 
-export function InquiryForm() {
+type InquiryFormProps = {
+  requestedService: "general" | "website-personalization" | "custom-website" | "business-voice";
+  requestedServiceLabel: string;
+};
+
+export function InquiryForm({ requestedService, requestedServiceLabel }: InquiryFormProps) {
   const [state, action, pending] = useActionState(submitInquiry, initialState);
+  const hasSpecificService = requestedService !== "general";
 
   return (
     <form className="inquiry-form" action={action}>
-      <h2>Tell us about your program</h2>
-      <p className="form-intro">We will use these details to prepare your launch or confirm the add-on you requested. The core website plan does not change.</p>
+      <h2>{hasSpecificService ? `Request ${requestedServiceLabel}` : "Tell us about your program"}</h2>
+      <p className="form-intro">
+        {hasSpecificService
+          ? `${requestedServiceLabel} is completely optional. Your standard $89 setup + $20/month website service works without this add-on.`
+          : "Use this form for general website questions or optional launch help. The standard website service already includes everything required to build, launch, host, and operate your site."}
+      </p>
+      <input type="hidden" name="requestedService" value={requestedService} />
       <div className="form-grid">
         <div className="field">
           <label htmlFor="name">Your name</label>
@@ -44,8 +55,17 @@ export function InquiryForm() {
           </select>
         </div>
         <div className="field field-full">
-          <label htmlFor="goals">What do you want your new website to accomplish?</label>
-          <textarea id="goals" name="goals" required minLength={10} maxLength={2000} placeholder="Tell us about your dogs, puppies, current challenges, and the pages or features you need." />
+          <label htmlFor="goals">{hasSpecificService ? "What should we know about this request?" : "What do you want your new website to accomplish?"}</label>
+          <textarea
+            id="goals"
+            name="goals"
+            required
+            minLength={10}
+            maxLength={2000}
+            placeholder={hasSpecificService
+              ? `Tell us what you would like included with ${requestedServiceLabel}.`
+              : "Tell us about your dogs, puppies, current challenges, and the pages or features you need."}
+          />
         </div>
         <div className="honeypot" aria-hidden="true">
           <label htmlFor="company">Company</label>
@@ -55,7 +75,7 @@ export function InquiryForm() {
       <div className="form-footer">
         <p className={`form-status ${state.status}`} role="status" aria-live="polite">{state.message}</p>
         <button className="button button-primary" type="submit" disabled={pending}>
-          {pending ? <><LoaderCircle size={18} className="spin" /> Sending…</> : <>Send My Request <ArrowRight size={18} /></>}
+          {pending ? <><LoaderCircle size={18} className="spin" /> Sending…</> : <>{hasSpecificService ? "Send Optional Service Request" : "Send My Request"} <ArrowRight size={18} /></>}
         </button>
       </div>
     </form>
