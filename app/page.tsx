@@ -11,7 +11,6 @@ import {
   Mail,
   MonitorSmartphone,
   RefreshCw,
-  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 import { BrowserPreview } from "@/components/browser-preview";
@@ -255,7 +254,7 @@ export default function Home() {
                 <div>
                   <p className="pricing-eyebrow">WHAT IS INCLUDED</p>
                   <h3>Website, breeder workspace, and documents are connected.</h3>
-                  <p>The core subscription combines the public website with the breeder's MyDogPortal workspace and DogBreederDocs tools so puppies, families, applications, documents, and published information can share one breeder record instead of becoming separate data silos.</p>
+                  <p>The core subscription combines the public website with the breeder&apos;s MyDogPortal workspace and DogBreederDocs tools so puppies, families, applications, documents, and published information can share one breeder record instead of becoming separate data silos.</p>
                   <dl>
                     <div><dt>Setup</dt><dd>$89 once, including one available non-premium .com</dd></div>
                     <div><dt>Monthly</dt><dd>$20 for the connected breeder website service</dd></div>
@@ -270,7 +269,7 @@ export default function Home() {
             <div className="addons-heading">
               <p className="eyebrow">ADDITIONAL SERVICES</p>
               <h3>Hands-on design help and Business Voice are available separately.</h3>
-              <p>Add them when they fit the breeder's needs.</p>
+              <p>Add them when they fit the breeder&apos;s needs.</p>
             </div>
             <div className="addons-grid">
               {websiteAddOns.map((addOn) => (
