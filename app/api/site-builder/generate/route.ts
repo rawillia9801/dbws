@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Check the website details and try again." }, { status: 400 });
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "Claude is ready, but the ANTHROPIC_API_KEY still needs to be added in Vercel." }, { status: 503 });
+    return NextResponse.json({ error: "BreederWeb Designer is ready, but the ANTHROPIC_API_KEY still needs to be added in Vercel." }, { status: 503 });
   }
 
   if (parsed.data.siteId) {
@@ -75,9 +75,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...result.output, generationId });
   } catch (error) {
     const errorCode = error instanceof Error ? error.name.slice(0, 100) : "unknown_error";
-    console.error("Claude site generation failed", { generationId, errorCode });
+    console.error("BreederWeb Designer site generation failed", { generationId, errorCode });
     await supabase.from("ai_site_generations").update({ status: "failed", error_code: errorCode, completed_at: new Date().toISOString() }).eq("id", generationId).eq("owner_id", authData.user.id);
-    return NextResponse.json({ error: "Claude could not complete that change. Try a shorter or more specific request." }, { status: 502 });
+    return NextResponse.json({ error: "BreederWeb Designer could not complete that change. Try a shorter or more specific request." }, { status: 502 });
   }
 }
 
