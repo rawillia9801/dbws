@@ -35,7 +35,7 @@ If the breeder asks to design or redesign the website, make substantive configur
 
 function configuredModel() {
   const value = process.env.CLAUDE_SITE_BUILDER_MODEL?.trim();
-  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model")) return DEFAULT_MODEL;
+  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model") || value === "claude-sonnet-4-5") return DEFAULT_MODEL;
   return value;
 }
 
