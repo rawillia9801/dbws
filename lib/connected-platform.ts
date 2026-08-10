@@ -63,7 +63,7 @@ async function ensureKennel(
         name,
         legal_name: name,
         slug,
-        plan: "starter",
+        plan: "website_companion",
         contact_email: input.email ?? null,
         custom_domain: input.requestedDomain ?? null,
         domain_status: input.requestedDomain ? "pending" : "not_requested",
@@ -142,5 +142,5 @@ export async function provisionConnectedPlatform(input: {
     .upsert(entitlements, { onConflict: "source,source_reference,entitlement_key" });
   if (entitlementError) throw new Error(`Connected website entitlement provisioning failed: ${entitlementError.code}`);
 
-  return { kennelId: kennel.id, kennelSlug: kennel.slug };
+  return { kennelId: kennel.id, kennelSlug: kennel.slug, companionPlan: kennel.plan === "website_companion" };
 }
