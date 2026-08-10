@@ -12,9 +12,9 @@ type PayPalProduct = { id: string; name?: string };
 type PayPalPlanSummary = { id: string; name?: string; status?: string };
 
 const PRODUCT_NAME = "Dog Breeder Web Complete Website Service";
-const PLAN_NAME = "Dog Breeder Web | $89 Setup + $20 Monthly | 2026-08";
+const PLAN_NAME = "Dog Breeder Web | $149 Setup + $24.95 Monthly | 2026-08";
 const PRODUCT_REQUEST_ID = "dbws-complete-website-product-2026-v1";
-const PLAN_REQUEST_ID = "dbws-live-89-setup-20-monthly-2026-08-v1";
+const PLAN_REQUEST_ID = "dbws-live-149-setup-24-95-monthly-2026-08-v1";
 
 const moneySchema = z.object({
   value: z.string(),
