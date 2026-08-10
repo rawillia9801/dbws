@@ -23,7 +23,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <section className="login-copy">
           <p className="eyebrow">BREEDER WORKSPACE</p>
           <h1>Your website, always ready to evolve.</h1>
-          <p>Edit your story, announce a litter, add a dog, change the look, or ask Claude to do it with you.</p>
+          <p>Edit your story, announce a litter, add a dog, change the look, or ask BreederWeb Designer to do it with you.</p>
         </section>
         <LoginForm next={next} />
       </main>
