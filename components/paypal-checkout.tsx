@@ -100,8 +100,8 @@ export function PayPalCheckout() {
         }
         if (
           config.planStatus.toUpperCase() !== "ACTIVE" ||
-          config.setupFee !== "89.00" ||
-          config.monthlyPrice !== "20.00" ||
+          config.setupFee !== "149.00" ||
+          config.monthlyPrice !== "24.95" ||
           config.setupFeeFailureAction.toUpperCase() !== "CANCEL" ||
           config.annualDomainRenewal !== "39.00" ||
           config.annualDomainRenewalBilling !== "separate"
@@ -160,7 +160,7 @@ export function PayPalCheckout() {
         await buttons.render(host);
         if (active) {
           setStatus("ready");
-          setMessage("$89 setup is charged when the subscription starts, then $20/month. The $39 domain renewal is billed separately each year before renewal.");
+          setMessage("$149 setup is charged when the subscription starts, then $24.95/month. The $39 domain renewal is billed separately each year before renewal.");
         }
       } catch (error) {
         if (!active) return;
@@ -232,7 +232,7 @@ export function PayPalCheckout() {
             />
             <button type="submit">Continue</button>
           </div>
-          <small>The $89 setup includes registration of one available, non-premium .com. We verify availability and non-premium status before registration.</small>
+          <small>The $149 setup includes first-year registration of one available, non-premium .com. We verify availability and non-premium status before registration.</small>
         </form>
       ) : (
         <div className={styles.domainSummary}>
