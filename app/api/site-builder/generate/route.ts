@@ -7,6 +7,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const DEFAULT_MODEL = "claude-sonnet-5";
+
 const systemPrompt = `You are the website copilot inside Dog Breeder Web, a structured website builder for ethical dog breeders.
 
 Your job is to revise the supplied website configuration in response to the breeder's request. Return a complete configuration every time.
@@ -19,6 +21,12 @@ Rules:
 - Keep all image URLs valid http or https URLs. Preserve existing image URLs unless asked to change imagery.
 - Maintain every required item and stay within the provided schema limits.
 - Summarize the meaningful changes in plain language for the breeder.`;
+
+function configuredModel() {
+  const value = process.env.CLAUDE_SITE_BUILDER_MODEL?.trim();
+  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model")) return DEFAULT_MODEL;
+  return value;
+}
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
@@ -40,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   const generationId = crypto.randomUUID();
-  const model = process.env.CLAUDE_SITE_BUILDER_MODEL ?? "claude-sonnet-5";
+  const model = configuredModel();
   const { error: generationError } = await supabase.from("ai_site_generations").insert({
     id: generationId,
     site_id: parsed.data.siteId ?? null,
@@ -75,9 +83,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...result.output, generationId });
   } catch (error) {
     const errorCode = error instanceof Error ? error.name.slice(0, 100) : "unknown_error";
-    console.error("BreederWeb Designer site generation failed", { generationId, errorCode });
+    const errorMessage = error instanceof Error ? error.message : "";
+    console.error("BreederWeb Designer site generation failed", { generationId, errorCode, model, errorMessage });
     await supabase.from("ai_site_generations").update({ status: "failed", error_code: errorCode, completed_at: new Date().toISOString() }).eq("id", generationId).eq("owner_id", authData.user.id);
-    return NextResponse.json({ error: "BreederWeb Designer could not complete that change. Try a shorter or more specific request." }, { status: 502 });
+
+    if (/model|not found|invalid/i.test(errorMessage)) {
+      return NextResponse.json({ error: `BreederWeb Designer model configuration is invalid. Set CLAUDE_SITE_BUILDER_MODEL to ${DEFAULT_MODEL}.` }, { status: 503 });
+    }
+
+    return NextResponse.json({ error: "BreederWeb Designer could not complete that change. Try again in a moment." }, { status: 502 });
   }
 }
-
