@@ -7,7 +7,7 @@ import { submitInquiry, type InquiryState } from "@/app/start/actions";
 const initialState: InquiryState = { status: "idle", message: "" };
 
 type InquiryFormProps = {
-  requestedService: "general" | "website-personalization" | "custom-website" | "business-voice";
+  requestedService: "general" | "business-voice";
   requestedServiceLabel: string;
 };
 
@@ -20,8 +20,8 @@ export function InquiryForm({ requestedService, requestedServiceLabel }: Inquiry
       <h2>{hasSpecificService ? `Request ${requestedServiceLabel}` : "Tell us about your program"}</h2>
       <p className="form-intro">
         {hasSpecificService
-          ? `${requestedServiceLabel} is completely optional. Your standard $149 setup + $24.95/month website service works without this add-on.`
-          : "Use this form for general website questions or optional launch help. The standard website service already includes everything required to build, launch, host, and operate your site."}
+          ? "Business Voice is optional. Your website, AI builder, hosting, branded email, and MyDogPortal companion workspace work without it."
+          : "Use this form for general website questions. BreederWeb Designer is included with the standard service, so a separate design package is not required."}
       </p>
       <input type="hidden" name="requestedService" value={requestedService} />
       <div className="form-grid">
@@ -63,7 +63,7 @@ export function InquiryForm({ requestedService, requestedServiceLabel }: Inquiry
             minLength={10}
             maxLength={2000}
             placeholder={hasSpecificService
-              ? `Tell us what you would like included with ${requestedServiceLabel}.`
+              ? "Tell us how you want calls greeted, routed, or handled."
               : "Tell us about your dogs, puppies, current challenges, and the pages or features you need."}
           />
         </div>
@@ -75,7 +75,7 @@ export function InquiryForm({ requestedService, requestedServiceLabel }: Inquiry
       <div className="form-footer">
         <p className={`form-status ${state.status}`} role="status" aria-live="polite">{state.message}</p>
         <button className="button button-primary" type="submit" disabled={pending}>
-          {pending ? <><LoaderCircle size={18} className="spin" /> Sending…</> : <>{hasSpecificService ? "Send Optional Service Request" : "Send My Request"} <ArrowRight size={18} /></>}
+          {pending ? <><LoaderCircle size={18} className="spin" /> Sending…</> : <>{hasSpecificService ? "Send Business Voice Request" : "Send My Request"} <ArrowRight size={18} /></>}
         </button>
       </div>
     </form>
