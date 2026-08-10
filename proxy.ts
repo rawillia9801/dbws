@@ -6,8 +6,13 @@ const platformHosts = new Set(["dogbreederweb.site", "www.dogbreederweb.site", "
 export async function proxy(request: NextRequest) {
   const host = (request.headers.get("x-forwarded-host") || request.headers.get("host") || "").split(":")[0].toLowerCase();
   const path = request.nextUrl.pathname;
-  const customDomainRequest = !platformHosts.has(host) && !host.endsWith(".vercel.app") && !path.startsWith("/api/");
+  const platformHost = platformHosts.has(host) || host.endsWith(".vercel.app");
 
+  if (!platformHost && host.startsWith("mail.")) {
+    return NextResponse.redirect("https://mail.hostinger.com", 307);
+  }
+
+  const customDomainRequest = !platformHost && !path.startsWith("/api/");
   if (customDomainRequest) {
     const rewrite = request.nextUrl.clone();
     rewrite.pathname = "/domain-site";
