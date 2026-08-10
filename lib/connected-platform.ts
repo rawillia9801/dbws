@@ -5,7 +5,7 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 type WebsiteSubscription = {
   subscriptionId: string;
   planId: string;
-  status: "APPROVED" | "ACTIVE";
+  status: string;
   requestedDomain: string;
   email?: string;
 };
