@@ -24,8 +24,8 @@ export const dynamic = "force-dynamic";
 const values = [
   [Bot, "BreederWeb Designer"],
   [Globe2, "Included .com"],
-  [MonitorSmartphone, "MyDogPortal Included"],
-  [FileText, "DogBreederDocs Included"],
+  [MonitorSmartphone, "MyDogPortal Ready"],
+  [FileText, "DogBreederDocs Ready"],
   [Mail, "Two Branded Emails"],
 ] as const;
 
@@ -53,7 +53,7 @@ const features = [
   {
     icon: Globe2,
     title: "Your included .com",
-    text: "The required $89 setup includes registration of one available, non-premium .com so your website launches on your own address.",
+    text: "The $149 setup includes first-year registration of one available, non-premium .com so your website launches on your own address.",
   },
   {
     icon: Mail,
@@ -75,14 +75,14 @@ const connectedProducts = [
     name: "MyDogPortal.Site",
     label: "BREEDER OPERATING SYSTEM",
     href: "https://mydogportal.site",
-    text: "Run the breeder side of the business: dogs, litters, puppies, applications, families, balances, updates, scheduling, records, and private Puppy Portals for buyers.",
+    text: "Connect the website to the breeder operating system for dogs, litters, puppies, applications, families, balances, scheduling, records, automation, and private Puppy Portals. A MyDogPortal subscription is separate unless bundled through an eligible plan.",
   },
   {
     icon: FileText,
     name: "DogBreederDocs.Online",
     label: "DOCUMENT WORKSPACE",
     href: "https://dogbreederdocs.online",
-    text: "Create state-aware breeder documents, customize clauses and branding, save reusable masters, and keep buyer and puppy paperwork connected to the breeder record.",
+    text: "Connect state-aware breeder documents, editable clauses, branding, and reusable paperwork to the breeder workflow. Standalone document purchases are separate; the complete packet is included with eligible MyDogPortal plans.",
   },
 ] as const;
 
@@ -103,12 +103,12 @@ export default function Home() {
             <div className="hero-copy">
               <p className="eyebrow">THE WEBSITE BUILDER FOR DOG BREEDERS</p>
               <h1>Describe your program. BreederWeb Designer builds with you.</h1>
-              <p className="hero-lead">A complete breeder website service connected to your breeder workspace and document tools—your own .com, managed hosting, branded email, Puppy Portals, breeder records, documents, applications, and publishing in one account.</p>
+              <p className="hero-lead">A complete breeder website service—your own .com, managed hosting, branded email, puppy and litter publishing, applications, embeds, and integration-ready connections to MyDogPortal and DogBreederDocs.</p>
               <div className="button-row">
                 <Link className="button button-primary" href="#pricing">Start Your Website <Sparkles size={17} /></Link>
                 <Link className="button button-outline" href="/builder">Open BreederWeb Designer</Link>
               </div>
-              <p className="hero-note"><span>$89 setup</span><span>$20/month</span><span>$39/year domain renewal</span></p>
+              <p className="hero-note"><span>$149 setup</span><span>$24.95/month</span><span>$39/year domain renewal</span></p>
             </div>
             <BrowserPreview />
           </div>
@@ -125,7 +125,7 @@ export default function Home() {
             <div className="section-heading centered">
               <p className="eyebrow">A COMPLETE BREEDER WEBSITE SERVICE</p>
               <h2>Everything required to build, launch, host, and operate the website.</h2>
-              <p>Your standard service includes the website builder, domain, hosting, SSL, updates, branded email, publishing tools, forms, embeds, mobile-ready pages, brand controls, and version history.</p>
+              <p>Your standard service includes the website builder, first-year standard .com registration, hosting, SSL, updates, branded email, publishing tools, forms, embeds, mobile-ready pages, brand controls, and version history.</p>
             </div>
             <div className="feature-grid">
               {features.map(({ icon: Icon, title, text }) => (
@@ -180,9 +180,9 @@ export default function Home() {
         <section className="section" id="connected">
           <div className="shell">
             <div className="section-heading centered">
-              <p className="eyebrow">ONE ACCOUNT · THREE CONNECTED TOOLS</p>
-              <h2>Your website is part of the breeder workspace—not another system to maintain.</h2>
-              <p>An active Dog Breeder Web subscription includes connected access to MyDogPortal.Site and DogBreederDocs.Online. The goal is one breeder identity, one kennel record, and one workspace where website content, puppies, families, records, and documents can work together.</p>
+              <p className="eyebrow">THREE PRODUCTS · BUILT TO CONNECT</p>
+              <h2>Your website can connect to the breeder OS and document workspace without giving away those products.</h2>
+              <p>Dog Breeder Web includes the website service described on this page. It is integration-ready for MyDogPortal.Site and DogBreederDocs.Online, but their paid software plans and standalone document purchases remain separate unless an eligible MyDogPortal plan specifically includes them.</p>
             </div>
             <div className="feature-grid">
               {connectedProducts.map(({ icon: Icon, name, label, href, text }) => (
@@ -196,8 +196,8 @@ export default function Home() {
               ))}
             </div>
             <div className="section-heading centered">
-              <h2>Sign in once. Work from one breeder account.</h2>
-              <p>MyDogPortal is the operating hub. Website building and document tools belong inside that same authenticated breeder experience so a breeder can move from a puppy record to the public website or buyer paperwork without creating another account or re-entering the same information.</p>
+              <h2>Connect once. Stop re-entering the same breeder information.</h2>
+              <p>When a breeder also uses MyDogPortal or DogBreederDocs, the products are designed to share the breeder identity and connected kennel data so website publishing and paperwork can use the right information without turning a $24.95 website plan into a substitute for the full operating system.</p>
             </div>
           </div>
         </section>
@@ -207,14 +207,14 @@ export default function Home() {
             <div className="comparison-copy">
               <p className="eyebrow">ONE RECORD, THE RIGHT SURFACE</p>
               <h2>Update the breeder record. Publish or document what belongs there.</h2>
-              <p>Your private breeder data stays protected. Public website pages receive only the information you choose to publish, while buyer portals and breeder documents can use the private information already connected to the family and puppy.</p>
+              <p>Your private breeder data stays protected. With the appropriate connected product, public website pages receive only the information you choose to publish, while buyer portals and breeder documents can use the private information already connected to the family and puppy.</p>
               <ul>
                 {[
-                  "Available puppies can stay synchronized with breeder records",
-                  "Applications arrive in the breeder workflow for review",
+                  "Available puppies can stay synchronized with connected breeder records",
+                  "Applications can flow into the breeder workflow for review",
                   "Dogs, health testing, litters, and policies stay presentation-ready",
-                  "Buyer and puppy information can populate document workflows",
-                  "Families return to their private Puppy Portal for the information intended for them",
+                  "Buyer and puppy information can populate connected document workflows",
+                  "MyDogPortal families can return to their private Puppy Portal",
                 ].map((item) => <li key={item}><Check size={18} />{item}</li>)}
               </ul>
               <Link className="text-link" href="/builder">Build the public experience <ArrowRight size={17} /></Link>
@@ -230,15 +230,15 @@ export default function Home() {
           <div className="shell pricing-shell">
             <div className="section-heading centered light-heading">
               <p className="eyebrow">SIMPLE WEBSITE PRICING</p>
-              <h2>Your website service includes the connected breeder workspace.</h2>
-              <p>The $20 monthly service includes Dog Breeder Web plus connected MyDogPortal and DogBreederDocs access under the breeder account. Additional hands-on services can be added separately.</p>
+              <h2>One complete website service. Add the breeder OS only when you need it.</h2>
+              <p>The $24.95 monthly service covers Dog Breeder Web itself. MyDogPortal subscriptions and standalone DogBreederDocs purchases are separate products, with integrations available when the breeder uses them.</p>
             </div>
             <div className="single-plan-layout">
               <article className="pricing-card website-plan-card">
                 <p className="pricing-eyebrow">{websitePlan.eyebrow}</p>
                 <h3>{websitePlan.name}</h3>
                 <div className="price"><strong>{formatPrice(websitePlan.setupFee)}</strong><span>one-time setup</span></div>
-                <p className="pricing-description">Includes registration of one available, non-premium .com.</p>
+                <p className="pricing-description">Includes first-year registration of one available, non-premium .com.</p>
                 <div className="price"><strong>{formatPrice(websitePlan.monthlyPrice)}</strong><span>/ month</span></div>
                 <p className="pricing-description">{websitePlan.description}</p>
                 <div className="price"><strong>{formatPrice(websitePlan.domainRenewal)}</strong><span>/ year domain renewal</span></div>
@@ -253,12 +253,12 @@ export default function Home() {
                 <span><FileText size={22} /></span>
                 <div>
                   <p className="pricing-eyebrow">WHAT IS INCLUDED</p>
-                  <h3>Website, breeder workspace, and documents are connected.</h3>
-                  <p>The core subscription combines the public website with the breeder&apos;s MyDogPortal workspace and DogBreederDocs tools so puppies, families, applications, documents, and published information can share one breeder record instead of becoming separate data silos.</p>
+                  <h3>The website service is complete on its own—and ready to connect.</h3>
+                  <p>Dog Breeder Web includes everything required to launch and operate the public kennel website. MyDogPortal and DogBreederDocs are complementary products, not hidden freebies inside the website price.</p>
                   <dl>
-                    <div><dt>Setup</dt><dd>$89 once, including one available non-premium .com</dd></div>
-                    <div><dt>Monthly</dt><dd>$20 for the connected breeder website service</dd></div>
-                    <div><dt>Connected account</dt><dd>MyDogPortal + DogBreederDocs access under the breeder identity</dd></div>
+                    <div><dt>Setup</dt><dd>$149 once, including first-year registration of one available non-premium .com</dd></div>
+                    <div><dt>Monthly</dt><dd>$24.95 for the complete managed breeder website service</dd></div>
+                    <div><dt>Integrations</dt><dd>MyDogPortal + DogBreederDocs ready; paid access is separate unless specifically bundled</dd></div>
                     <div><dt>Domain renewal</dt><dd>$39/year, billed separately before renewal</dd></div>
                     <div><dt>Business email</dt><dd>Two domain-branded addresses with the connected domain</dd></div>
                   </dl>
@@ -282,13 +282,13 @@ export default function Home() {
                 </article>
               ))}
             </div>
-            <p className="pricing-fineprint">Business Voice usage is metered separately. Premium domains are outside the included .com registration and require separate approval and pricing.</p>
+            <p className="pricing-fineprint">Business Voice usage is metered separately. Premium domains are outside the included standard .com registration and require separate approval and pricing.</p>
           </div>
         </section>
 
         <section className="section final-cta">
           <div className="shell final-cta-inner">
-            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Start with your own .com and one connected breeder account.</h2></div>
+            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Start with your own .com and a breeder website built to connect.</h2></div>
             <Link className="button button-primary" href="#pricing">Start Your Website <ArrowRight size={18} /></Link>
           </div>
         </section>
