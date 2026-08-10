@@ -96,7 +96,7 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
     setSource("manual");
   }
 
-  async function askClaude(requestedPrompt?: string) {
+  async function askDesigner(requestedPrompt?: string) {
     const nextPrompt = (requestedPrompt ?? prompt).trim();
     if (!nextPrompt || aiBusy) return;
     setPrompt("");
@@ -110,14 +110,14 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
         body: JSON.stringify({ siteId, prompt: nextPrompt, currentConfig: config }),
       });
       const payload = await response.json() as (BuilderResponse & { generationId: string }) | { error: string };
-      if (!response.ok || !("config" in payload)) throw new Error("error" in payload ? payload.error : "Claude could not update the site.");
+      if (!response.ok || !("config" in payload)) throw new Error("error" in payload ? payload.error : "BreederWeb Designer could not update the site.");
       setConfig(payload.config);
       setGenerationId(payload.generationId);
       setSource("ai");
       setMessages((current) => [...current, { role: "assistant", text: payload.assistantMessage, changes: payload.changeSummary }]);
-      setNotice("Claude’s changes are now in the live preview. Save when you are happy with them.");
+      setNotice("BreederWeb Designer’s changes are now in the live preview. Save when you are happy with them.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Claude could not update the site.";
+      const message = error instanceof Error ? error.message : "BreederWeb Designer could not update the site.";
       setMessages((current) => [...current, { role: "assistant", text: message }]);
     } finally {
       setAiBusy(false);
@@ -172,7 +172,7 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
 
           {panel === "style" ? (
             <div className={styles.controlBody}>
-              <div className={styles.styleIntro}><Sparkles size={18} /><div><strong>Your site is not locked to a template.</strong><p>Set exact colors here or ask Claude to rethink the complete visual direction in the conversation panel.</p></div></div>
+              <div className={styles.styleIntro}><Sparkles size={18} /><div><strong>Your site is not locked to a template.</strong><p>Set exact colors here or ask BreederWeb Designer to rethink the complete visual direction in the conversation panel.</p></div></div>
               <ControlSection title="Colors" icon={<Palette size={15} />}>
                 {(Object.keys(config.theme) as Array<keyof SiteConfig["theme"]>).map((key) => (
                   <label className={styles.colorField} key={key}><span>{key}</span><input type="color" value={config.theme[key]} onChange={(event) => { setConfig((current) => ({ ...current, theme: { ...current.theme, [key]: event.target.value } })); setSource("manual"); }} /><code>{config.theme[key]}</code></label>
@@ -234,7 +234,7 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
         </section>
 
         <aside className={styles.copilot}>
-          <div className={styles.copilotHeader}><span><Bot size={20} /></span><div><strong>Claude website copilot</strong><small>Interactive design partner</small></div><Sparkles size={16} /></div>
+          <div className={styles.copilotHeader}><span><Bot size={20} /></span><div><strong>BreederWeb Designer website copilot</strong><small>Interactive design partner</small></div><Sparkles size={16} /></div>
           <div className={styles.messages}>
             {messages.map((message, index) => (
               <div className={message.role === "user" ? styles.userMessage : styles.aiMessage} key={`${message.role}-${index}`}>
@@ -242,14 +242,14 @@ export function Builder({ initialConfig, initialSiteId, initialSlug, initialPubl
                 {message.changes && <ul>{message.changes.map((change) => <li key={change}><Check size={12} />{change}</li>)}</ul>}
               </div>
             ))}
-            {aiBusy && <div className={styles.thinking}><LoaderCircle className={styles.spin} size={17} />Claude is shaping your site…</div>}
+            {aiBusy && <div className={styles.thinking}><LoaderCircle className={styles.spin} size={17} />BreederWeb Designer is shaping your site…</div>}
           </div>
-          <div className={styles.promptIdeas}>{starterPrompts.map((idea) => <button key={idea} onClick={() => askClaude(idea)}>{idea}</button>)}</div>
+          <div className={styles.promptIdeas}>{starterPrompts.map((idea) => <button key={idea} onClick={() => askDesigner(idea)}>{idea}</button>)}</div>
           <div className={styles.composer}>
-            <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void askClaude(); } }} placeholder="Ask Claude to redesign or rewrite anything…" />
-            <button aria-label="Send to Claude" disabled={!prompt.trim() || aiBusy} onClick={() => askClaude()}><Send size={17} /></button>
+            <textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void askDesigner(); } }} placeholder="Ask BreederWeb Designer to redesign or rewrite anything…" />
+            <button aria-label="Send to BreederWeb Designer" disabled={!prompt.trim() || aiBusy} onClick={() => askDesigner()}><Send size={17} /></button>
           </div>
-          <p className={styles.aiNote}>Claude changes editable site content—not raw code. Review all health claims and litter details before publishing.</p>
+          <p className={styles.aiNote}>BreederWeb Designer changes editable site content—not raw code. Review all health claims and litter details before publishing.</p>
         </aside>
       </div>
     </main>
