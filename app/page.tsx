@@ -23,7 +23,7 @@ import { formatPrice, websiteAddOns, websitePlan } from "@/lib/pricing";
 export const dynamic = "force-dynamic";
 
 const values = [
-  [Bot, "Claude AI Builder"],
+  [Bot, "BreederWeb Designer AI Builder"],
   [MonitorSmartphone, "Mobile Ready"],
   [RefreshCw, "Live Puppy Updates"],
   [Mail, "Two Business Emails"],
@@ -34,7 +34,7 @@ const features = [
   {
     icon: Bot,
     title: "Build by conversation",
-    text: "Tell Claude about your program, your voice, and the families you want to reach. It builds and revises the editable site in a live preview.",
+    text: "Tell BreederWeb Designer about your program, your voice, and the families you want to reach. It builds and revises the editable site in a live preview.",
   },
   {
     icon: RefreshCw,
@@ -79,10 +79,10 @@ export default function Home() {
           <div className="shell hero-grid">
             <div className="hero-copy">
               <p className="eyebrow">THE AI WEBSITE BUILDER FOR DOG BREEDERS</p>
-              <h1>Describe your program. Claude builds the website.</h1>
+              <h1>Describe your program. BreederWeb Designer builds the website.</h1>
               <p className="hero-lead">One editable website system for your kennel—connected puppies, litters, applications, hosting, SSL, and business email included.</p>
               <div className="button-row">
-                <Link className="button button-primary" href="/builder">Build With Claude <Sparkles size={17} /></Link>
+                <Link className="button button-primary" href="/builder">Build With BreederWeb Designer <Sparkles size={17} /></Link>
                 <Link className="button button-outline" href="#pricing">See the One Plan</Link>
               </div>
               <p className="hero-note"><span>$17.95/month</span><span>No template package to buy</span><span>Optional add-ons only when needed</span></p>
@@ -121,7 +121,7 @@ export default function Home() {
             <div className="ai-builder-copy">
               <p className="eyebrow">NO TEMPLATE PICKER</p>
               <h2>Build the site you describe—not one of three packages.</h2>
-              <p>Start with your kennel details, then work with Claude like a creative partner. Ask for a warmer voice, a stronger health-testing section, a litter announcement, a new color direction, or a full redesign. Every result stays structured, editable, previewable, and publishable.</p>
+              <p>Start with your kennel details, then work with BreederWeb Designer like a creative partner. Ask for a warmer voice, a stronger health-testing section, a litter announcement, a new color direction, or a full redesign. Every result stays structured, editable, previewable, and publishable.</p>
               <ul>
                 <li><Check size={18} />Conversational design and copy changes</li>
                 <li><Check size={18} />Manual controls for every important field</li>
@@ -130,8 +130,8 @@ export default function Home() {
               </ul>
               <Link className="button button-primary" href="/builder">Open the AI Website Builder <ArrowRight size={17} /></Link>
             </div>
-            <div className="ai-builder-demo" aria-label="Claude website builder preview">
-              <header><span><Bot size={18} />Claude website copilot</span><em>LIVE</em></header>
+            <div className="ai-builder-demo" aria-label="BreederWeb Designer website builder preview">
+              <header><span><Bot size={18} />BreederWeb Designer website copilot</span><em>LIVE</em></header>
               <div className="ai-demo-body">
                 <div className="ai-demo-chat">
                   <p className="ai-demo-user">Make this feel established and welcoming. Feature our fall litter and make health testing easier to find.</p>
@@ -139,7 +139,7 @@ export default function Home() {
                     <strong><Sparkles size={15} />Done. I updated four parts of the site.</strong>
                     <ul>{aiChanges.map((change) => <li key={change}><Check size={12} />{change}</li>)}</ul>
                   </div>
-                  <span>Ask Claude to change anything… <ArrowRight size={14} /></span>
+                  <span>Ask BreederWeb Designer to change anything… <ArrowRight size={14} /></span>
                 </div>
                 <div className="ai-demo-preview">
                   <div className="ai-demo-browser"><i /><i /><i /><small>cedarcreek.dogbreederweb.site</small></div>
@@ -233,7 +233,7 @@ export default function Home() {
 
         <section className="section final-cta">
           <div className="shell final-cta-inner">
-            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Build the website with Claude, then make every detail yours.</h2></div>
+            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Build the website with BreederWeb Designer, then make every detail yours.</h2></div>
             <Link className="button button-primary" href="/builder">Open the AI Website Builder <ArrowRight size={18} /></Link>
           </div>
         </section>
