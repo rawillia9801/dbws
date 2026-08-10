@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { provisionConnectedPlatform } from "@/lib/connected-platform";
 import { normalizeComDomain } from "@/lib/domain";
 import { verifyWebsiteSubscription } from "@/lib/paypal";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -24,41 +25,22 @@ function readPendingSubscription(value: string | undefined): PendingSubscription
   }
 }
 
-async function attachPendingSubscription(
-  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>,
-  userId: string,
-  userEmail: string | undefined,
-) {
+async function attachPendingSubscription(user: {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}) {
   const cookieStore = await cookies();
   const pending = readPendingSubscription(cookieStore.get("dbws_pending_subscription")?.value);
   if (!pending) return;
 
   const verified = await verifyWebsiteSubscription(pending.subscriptionId, pending.requestedDomain);
-  const { error: subscriptionError } = await supabase.from("website_subscriptions").upsert({
-    owner_id: userId,
-    paypal_subscription_id: verified.subscriptionId,
-    paypal_plan_id: verified.planId,
-    paypal_status: verified.status,
-    requested_domain: verified.requestedDomain,
-    purchaser_email: verified.email ?? userEmail ?? null,
-    setup_fee_cents: 8900,
-    monthly_price_cents: 2000,
-    annual_domain_renewal_cents: 3900,
-    domain_renewal_billed_separately: true,
-  }, { onConflict: "paypal_subscription_id" });
-
-  if (subscriptionError) {
-    throw new Error(`Website subscription could not be attached: ${subscriptionError.code}`);
-  }
-
-  const { error: kennelError } = await supabase.from("kennels").update({
-    custom_domain: verified.requestedDomain,
-    domain_status: "pending",
-  }).eq("owner_auth_user_id", userId);
-
-  if (kennelError) {
-    console.warn("Verified website domain could not be attached to an existing kennel record", { code: kennelError.code });
-  }
+  await provisionConnectedPlatform({
+    userId: user.id,
+    email: user.email,
+    kennelName: typeof user.user_metadata?.kennel_name === "string" ? user.user_metadata.kennel_name : undefined,
+    subscription: verified,
+  });
 
   cookieStore.delete("dbws_pending_subscription");
 }
@@ -76,7 +58,7 @@ export async function GET(request: Request) {
       const { data } = await supabase.auth.getUser();
       if (data.user) {
         try {
-          await attachPendingSubscription(supabase, data.user.id, data.user.email);
+          await attachPendingSubscription(data.user);
         } catch (subscriptionError) {
           console.error(
             "Pending website subscription could not be attached after sign-in",
@@ -89,6 +71,6 @@ export async function GET(request: Request) {
   }
 
   const login = new URL("/login", url.origin);
-  login.searchParams.set("error", "link");
+  login.searchParams.set("error", "confirmation");
   return NextResponse.redirect(login);
 }
