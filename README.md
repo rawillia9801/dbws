@@ -1,12 +1,12 @@
 # Dog Breeder Web
 
-Production website and structured breeder-site studio for [dogbreederweb.site](https://dogbreederweb.site), built with Next.js App Router, Supabase, Claude, PayPal, and Vercel.
+Production website and structured breeder-site studio for [dogbreederweb.site](https://dogbreederweb.site), built with Next.js App Router, Supabase, Anthropic-powered AI, PayPal, and Vercel.
 
 ## Stack
 
 - Next.js 16 and React 19
 - Supabase Auth and Postgres for breeder-owned drafts, published sites, version history, AI generations, and website inquiries
-- Anthropic Claude through the Vercel AI SDK for schema-validated website editing
+- Anthropic AI through the Vercel AI SDK for schema-validated website editing
 - PayPal Subscriptions for the single $17.95/month website plan
 - Vercel for production deployment
 - TypeScript and Zod validation
@@ -37,7 +37,7 @@ Use `PAYPAL_ENVIRONMENT=live` for production. The Anthropic API key and PayPal c
 
 ## Product model
 
-Dog Breeder Web has one recurring website plan, not tiered template packages. The plan includes the Claude website builder, managed hosting, SSL, two branded business email addresses, an included breeder subdomain, and the public puppy, litter, application, and embed capabilities from the WhiteLabel breeder platform. Brand Launch, done-for-you personalization, ground-up custom work, and Business Voice are optional add-ons.
+Dog Breeder Web has one recurring website plan, not tiered template packages. The plan includes the BreederWeb Designer website builder, managed hosting, SSL, two branded business email addresses, an included breeder subdomain, and the public puppy, litter, application, and embed capabilities from the WhiteLabel breeder platform. Brand Launch, done-for-you personalization, ground-up custom work, and Business Voice are optional add-ons.
 
 Only the Supabase publishable key is used. A service-role or secret key must never be exposed to the browser or committed.
 
