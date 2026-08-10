@@ -4,9 +4,9 @@ export const websitePlan = {
   eyebrow: "One complete website plan",
   price: "17.95",
   interval: "month",
-  description: "The public website layer from the WhiteLabel breeder platform, rebuilt around an interactive Claude website builder.",
+  description: "The public website layer from the WhiteLabel breeder platform, rebuilt around an interactive BreederWeb Designer website builder.",
   features: [
-    "Interactive Claude AI website builder",
+    "Interactive BreederWeb Designer AI website builder",
     "Managed Vercel hosting, SSL, and updates",
     "Two branded business email addresses",
     "Included kennel subdomain",
