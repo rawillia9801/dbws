@@ -13,7 +13,7 @@ export function LoginForm({ next }: { next: string }) {
     <form className="login-card" action={action}>
       <span className="login-icon"><LockKeyhole size={24} /></span>
       <h2>Open your breeder workspace</h2>
-      <p>Sign in with your email address and password, or create a new breeder account.</p>
+      <p>Use one breeder account for Dog Breeder Web, MyDogPortal, and DogBreederDocs.</p>
       <input type="hidden" name="next" value={next} />
       <label>
         Email address
@@ -23,12 +23,17 @@ export function LoginForm({ next }: { next: string }) {
         Password
         <input name="password" type="password" autoComplete="current-password" minLength={8} placeholder="At least 8 characters" required />
       </label>
+      <label>
+        Kennel or breeding-business name
+        <input name="kennelName" type="text" autoComplete="organization" maxLength={100} placeholder="Needed when creating a new account" />
+      </label>
       <button className="button button-primary" disabled={pending} type="submit" name="mode" value="signin">
         {pending ? "Working…" : "Sign in"}<ArrowRight size={17} />
       </button>
       <button className="button button-outline" disabled={pending} type="submit" name="mode" value="signup">
         Create breeder account
       </button>
+      <small>Your kennel name is only required when creating a new breeder account.</small>
       {state.message && <p className={`form-status ${state.status}`} role="status">{state.message}</p>}
     </form>
   );
