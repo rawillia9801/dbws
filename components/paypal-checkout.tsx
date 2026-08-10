@@ -81,6 +81,7 @@ export function PayPalCheckout() {
   useEffect(() => {
     if (!checkoutDomain || !buttonHost.current) return;
 
+    const selectedDomain = checkoutDomain;
     let active = true;
     let buttons: PayPalButtons | null = null;
     const host = buttonHost.current;
@@ -117,11 +118,11 @@ export function PayPalCheckout() {
           createSubscription: async (_data, actions) => {
             if (active) {
               setStatus("processing");
-              setMessage(`Opening PayPal for ${checkoutDomain}…`);
+              setMessage(`Opening PayPal for ${selectedDomain}…`);
             }
             return actions.subscription.create({
               plan_id: config.planId,
-              custom_id: checkoutDomain,
+              custom_id: selectedDomain,
             });
           },
           onApprove: async ({ subscriptionID }) => {
@@ -131,7 +132,7 @@ export function PayPalCheckout() {
               const response = await fetch("/api/paypal/subscription", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subscriptionId: subscriptionID, requestedDomain: checkoutDomain }),
+                body: JSON.stringify({ subscriptionId: subscriptionID, requestedDomain: selectedDomain }),
               });
               if (!response.ok) throw new Error(await readError(response, "The subscription could not be confirmed."));
               const result = (await response.json()) as { firstName?: string; requestedDomain: string };
@@ -179,16 +180,17 @@ export function PayPalCheckout() {
   function prepareDomain(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const result = tryNormalizeComDomain(domainInput);
-    if (!result.domain) {
+    const normalizedDomain = result.domain;
+    if (normalizedDomain === null) {
       setStatus("error");
-      setMessage(result.error);
+      setMessage(result.error ?? "Enter a valid .com domain.");
       return;
     }
 
-    setDomainInput(result.domain);
-    setCheckoutDomain(result.domain);
+    setDomainInput(normalizedDomain);
+    setCheckoutDomain(normalizedDomain);
     setStatus("loading");
-    setMessage(`Preparing PayPal for ${result.domain}…`);
+    setMessage(`Preparing PayPal for ${normalizedDomain}…`);
   }
 
   function changeDomain() {
