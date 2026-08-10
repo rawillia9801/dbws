@@ -17,7 +17,7 @@ export function Footer() {
         </div>
         <div>
           <h3>Get started</h3>
-          <Link href="/builder">Build With Claude</Link>
+          <Link href="/builder">Build With BreederWeb Designer</Link>
           <Link href="/#pricing">One Plan + Add-ons</Link>
           <a href="mailto:hello@dogbreederweb.site">hello@dogbreederweb.site</a>
         </div>
