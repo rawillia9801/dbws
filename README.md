@@ -16,6 +16,7 @@ Production website and structured breeder-site studio for [dogbreederweb.site](h
 ```text
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
+SUPABASE_SERVICE_ROLE_KEY=your_server_only_service_role_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 CLAUDE_SITE_BUILDER_MODEL=claude-sonnet-5
 PAYPAL_CLIENT_ID=your_paypal_client_id
@@ -24,7 +25,7 @@ PAYPAL_ENVIRONMENT=live
 NEXT_PUBLIC_SITE_URL=https://dogbreederweb.site
 ```
 
-`ANTHROPIC_API_KEY` and `PAYPAL_CLIENT_SECRET` are server-only and must never be prefixed with `NEXT_PUBLIC_` or committed. The PayPal client ID is returned by the server only as required by PayPal's browser SDK. BreederWeb Designer falls back to `claude-sonnet-5` when `CLAUDE_SITE_BUILDER_MODEL` is missing or still contains a placeholder value.
+`SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, and `PAYPAL_CLIENT_SECRET` are server-only and must never be prefixed with `NEXT_PUBLIC_` or committed. The Supabase service-role key is used only for trusted connected-platform provisioning after the server verifies the PayPal subscription. The PayPal client ID is returned by the server only as required by PayPal's browser SDK. BreederWeb Designer falls back to `claude-sonnet-5` when `CLAUDE_SITE_BUILDER_MODEL` is missing or still contains a placeholder value.
 
 ## Product model
 
@@ -50,6 +51,8 @@ The intended customer experience is one breeder identity across three connected 
 - `mydogportal.site` — breeder operating system, dogs, litters, puppies, applications, families, balances, updates, scheduling, records, and Puppy Portals
 - `dogbreederdocs.online` — state-aware breeder documents, reusable masters, branding, clause editing, and buyer/puppy paperwork
 
+A verified Dog Breeder Web subscription provisions the same Supabase breeder identity into the shared kennel/membership model, creates server-managed `platform_entitlements` for all three products, and grants an included complete DogBreederDocs packet. MyDogPortal recognizes the connected entitlement instead of requiring a second software checkout.
+
 MyDogPortal is the authenticated operating hub. Website and document tools should be reachable from the same breeder account and should use the same breeder, puppy, family, and document records instead of requiring separate account creation or duplicated data entry.
 
 ## PayPal flow
@@ -60,7 +63,7 @@ MyDogPortal is the authenticated operating hub. Website and document tools shoul
 4. The plan uses `payment_preferences.setup_fee` for $89 and `setup_fee_failure_action: "CANCEL"`.
 5. The requested domain is supplied to the PayPal subscription as `custom_id`.
 6. After approval, the server retrieves the subscription from PayPal and verifies its subscription ID, expected plan ID, APPROVED/ACTIVE status, and requested domain/custom ID.
-7. The verified subscription and requested domain are connected to the authenticated breeder in Supabase. If checkout occurs before sign-in, the verified identifiers are carried into the authenticated builder flow and re-verified server-side.
+7. The verified subscription is attached to the authenticated Supabase user with a server-only admin client. The shared kennel/membership is created or reused, the requested domain is attached, connected product entitlements are granted, and the complete DogBreederDocs packet is marked included. If checkout occurs before sign-in, the verified identifiers are carried into the authenticated flow and re-verified server-side.
 
 ## Supabase
 
@@ -70,7 +73,7 @@ Use the existing production project `gobeibjrfyyiazpmnztd`. Do not create a seco
 https://dogbreederweb.site/auth/callback
 ```
 
-The builder uses `breeder_sites`, `breeder_site_versions`, `published_breeder_sites`, and `ai_site_generations`. Verified website checkout records use `website_subscriptions`.
+The builder uses `breeder_sites`, `breeder_site_versions`, `published_breeder_sites`, and `ai_site_generations`. Verified website checkout records use `website_subscriptions`. Connected access uses `platform_entitlements` with authenticated read-only access and trusted server-side writes.
 
 ## Validation
 
