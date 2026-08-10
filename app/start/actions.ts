@@ -16,7 +16,7 @@ const inquirySchema = z.object({
   website: z.string().trim().max(240).optional(),
   timeline: z.enum(["as-soon-as-possible", "one-to-two-months", "three-plus-months", "exploring"]),
   goals: z.string().trim().min(10, "Please share a little more about what you need.").max(2000),
-  requestedService: z.enum(["general", "website-personalization", "custom-website", "business-voice"]),
+  requestedService: z.enum(["general", "business-voice"]),
   company: z.string().max(0),
 });
 
@@ -63,7 +63,7 @@ export async function submitInquiry(_: InquiryState, formData: FormData): Promis
 
   const serviceMessage = inquiry.requestedService === "general"
     ? "Your website request has been received."
-    : "Your optional service request has been received.";
+    : "Your Business Voice request has been received.";
 
   return { status: "success", message: `Thank you. ${serviceMessage} We will follow up by email.` };
 }
