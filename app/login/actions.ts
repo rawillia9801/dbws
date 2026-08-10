@@ -12,8 +12,17 @@ export type LoginState = {
 const authSchema = z.object({
   email: z.string().trim().email("Enter a valid email address.").max(254),
   password: z.string().min(8, "Password must be at least 8 characters.").max(72, "Password is too long."),
+  kennelName: z.string().trim().max(100).optional(),
   mode: z.enum(["signin", "signup"]),
   next: z.string().startsWith("/").max(120).default("/builder"),
+}).superRefine((value, ctx) => {
+  if (value.mode === "signup" && (!value.kennelName || value.kennelName.length < 2)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["kennelName"],
+      message: "Enter your kennel or breeding-business name to create an account.",
+    });
+  }
 });
 
 function getSiteUrl() {
@@ -24,6 +33,7 @@ export async function authenticate(_: LoginState, formData: FormData): Promise<L
   const parsed = authSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
+    kennelName: formData.get("kennelName") || undefined,
     mode: formData.get("mode"),
     next: formData.get("next") || "/builder",
   });
@@ -40,7 +50,7 @@ export async function authenticate(_: LoginState, formData: FormData): Promise<L
     return { status: "error", message: "Sign-in is not configured yet." };
   }
 
-  const { email, password, mode, next } = parsed.data;
+  const { email, password, kennelName, mode, next } = parsed.data;
 
   if (mode === "signin") {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -64,6 +74,10 @@ export async function authenticate(_: LoginState, formData: FormData): Promise<L
     password,
     options: {
       emailRedirectTo: callback.toString(),
+      data: {
+        kennel_name: kennelName,
+        account_type: "breeder",
+      },
     },
   });
 
@@ -81,6 +95,6 @@ export async function authenticate(_: LoginState, formData: FormData): Promise<L
 
   return {
     status: "success",
-    message: "Account created. Check your email to confirm your address, then return here and sign in with your password.",
+    message: "Account created. Confirm your email address, then sign in with the password you chose.",
   };
 }
