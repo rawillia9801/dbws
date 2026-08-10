@@ -25,9 +25,9 @@ export const dynamic = "force-dynamic";
 const values = [
   [Bot, "BreederWeb Designer"],
   [Globe2, "Included .com"],
-  [MonitorSmartphone, "Mobile Ready"],
+  [MonitorSmartphone, "MyDogPortal Included"],
+  [FileText, "DogBreederDocs Included"],
   [Mail, "Two Branded Emails"],
-  [ShieldCheck, "Managed Hosting"],
 ] as const;
 
 const features = [
@@ -63,6 +63,30 @@ const features = [
   },
 ] as const;
 
+const connectedProducts = [
+  {
+    icon: Globe2,
+    name: "DogBreederWeb.Site",
+    label: "WEBSITE + BRAND",
+    href: "https://dogbreederweb.site",
+    text: "Build and manage the public kennel website with BreederWeb Designer, your included .com, branded email, puppy and litter publishing, applications, embeds, and version history.",
+  },
+  {
+    icon: MonitorSmartphone,
+    name: "MyDogPortal.Site",
+    label: "BREEDER OPERATING SYSTEM",
+    href: "https://mydogportal.site",
+    text: "Run the breeder side of the business: dogs, litters, puppies, applications, families, balances, updates, scheduling, records, and private Puppy Portals for buyers.",
+  },
+  {
+    icon: FileText,
+    name: "DogBreederDocs.Online",
+    label: "DOCUMENT WORKSPACE",
+    href: "https://dogbreederdocs.online",
+    text: "Create state-aware breeder documents, customize clauses and branding, save reusable masters, and keep buyer and puppy paperwork connected to the breeder record.",
+  },
+] as const;
+
 const designerChanges = [
   "Rewrote the hero around health-tested Goldens",
   "Added the fall litter announcement",
@@ -80,7 +104,7 @@ export default function Home() {
             <div className="hero-copy">
               <p className="eyebrow">THE WEBSITE BUILDER FOR DOG BREEDERS</p>
               <h1>Describe your program. BreederWeb Designer builds with you.</h1>
-              <p className="hero-lead">A complete breeder website service with your own .com, managed hosting, branded email, puppy and litter publishing, applications, embeds, and an editable website builder.</p>
+              <p className="hero-lead">A complete breeder website service connected to your breeder workspace and document tools—your own .com, managed hosting, branded email, Puppy Portals, breeder records, documents, applications, and publishing in one account.</p>
               <div className="button-row">
                 <Link className="button button-primary" href="#pricing">Start Your Website <Sparkles size={17} /></Link>
                 <Link className="button button-outline" href="/builder">Open BreederWeb Designer</Link>
@@ -102,7 +126,7 @@ export default function Home() {
             <div className="section-heading centered">
               <p className="eyebrow">A COMPLETE BREEDER WEBSITE SERVICE</p>
               <h2>Everything required to build, launch, host, and operate the website.</h2>
-              <p>Your standard service already includes the website builder, domain, hosting, SSL, updates, branded email, publishing tools, forms, embeds, mobile-ready pages, brand controls, and version history. Optional add-ons are never required.</p>
+              <p>Your standard service includes the website builder, domain, hosting, SSL, updates, branded email, publishing tools, forms, embeds, mobile-ready pages, brand controls, and version history.</p>
             </div>
             <div className="feature-grid">
               {features.map(({ icon: Icon, title, text }) => (
@@ -154,19 +178,44 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="section" id="connected">
+          <div className="shell">
+            <div className="section-heading centered">
+              <p className="eyebrow">ONE ACCOUNT · THREE CONNECTED TOOLS</p>
+              <h2>Your website is part of the breeder workspace—not another system to maintain.</h2>
+              <p>An active Dog Breeder Web subscription includes connected access to MyDogPortal.Site and DogBreederDocs.Online. The goal is one breeder identity, one kennel record, and one workspace where website content, puppies, families, records, and documents can work together.</p>
+            </div>
+            <div className="feature-grid">
+              {connectedProducts.map(({ icon: Icon, name, label, href, text }) => (
+                <article className="feature-card" key={name}>
+                  <span className="icon-circle"><Icon /></span>
+                  <p className="pricing-eyebrow">{label}</p>
+                  <h3>{name}</h3>
+                  <p>{text}</p>
+                  <a className="text-link" href={href} target="_blank" rel="noreferrer">Visit {name} <ArrowRight size={15} /></a>
+                </article>
+              ))}
+            </div>
+            <div className="section-heading centered">
+              <h2>Sign in once. Work from one breeder account.</h2>
+              <p>MyDogPortal is the operating hub. Website building and document tools belong inside that same authenticated breeder experience so a breeder can move from a puppy record to the public website or buyer paperwork without creating another account or re-entering the same information.</p>
+            </div>
+          </div>
+        </section>
+
         <section className="section comparison" id="examples">
           <div className="shell comparison-grid">
             <div className="comparison-copy">
-              <p className="eyebrow">ONE RECORD, TWO SURFACES</p>
-              <h2>Update the breeder record. Publish the right parts.</h2>
-              <p>Your private breeder data stays protected. The public website receives only the puppy, litter, application, and program information you choose to publish.</p>
+              <p className="eyebrow">ONE RECORD, THE RIGHT SURFACE</p>
+              <h2>Update the breeder record. Publish or document what belongs there.</h2>
+              <p>Your private breeder data stays protected. Public website pages receive only the information you choose to publish, while buyer portals and breeder documents can use the private information already connected to the family and puppy.</p>
               <ul>
                 {[
                   "Available puppies can stay synchronized with breeder records",
                   "Applications arrive in the breeder workflow for review",
                   "Dogs, health testing, litters, and policies stay presentation-ready",
-                  "Embeds can connect website sections to the same data",
-                  "Every public page is built for phones and computers",
+                  "Buyer and puppy information can populate document workflows",
+                  "Families return to their private Puppy Portal for the information intended for them",
                 ].map((item) => <li key={item}><Check size={18} />{item}</li>)}
               </ul>
               <Link className="text-link" href="/builder">Build the public experience <ArrowRight size={17} /></Link>
@@ -182,8 +231,8 @@ export default function Home() {
           <div className="shell pricing-shell">
             <div className="section-heading centered light-heading">
               <p className="eyebrow">SIMPLE WEBSITE PRICING</p>
-              <h2>Your website service is complete before add-ons.</h2>
-              <p>The required setup and monthly service are enough to build, launch, host, and operate your website. The services below are optional extras only.</p>
+              <h2>Your website service includes the connected breeder workspace.</h2>
+              <p>The $20 monthly service includes Dog Breeder Web plus connected MyDogPortal and DogBreederDocs access under the breeder account. Additional hands-on services can be added separately.</p>
             </div>
             <div className="single-plan-layout">
               <article className="pricing-card website-plan-card">
@@ -205,11 +254,12 @@ export default function Home() {
                 <span><FileText size={22} /></span>
                 <div>
                   <p className="pricing-eyebrow">WHAT IS INCLUDED</p>
-                  <h3>The operating website is the standard service.</h3>
-                  <p>You do not need personalization, a ground-up custom build, or Business Voice to use BreederWeb Designer, publish the website, connect the included .com, host it on Vercel, use SSL, receive updates, publish puppies or litters, collect forms, use embeds, or manage the site on mobile and desktop.</p>
+                  <h3>Website, breeder workspace, and documents are connected.</h3>
+                  <p>The core subscription combines the public website with the breeder's MyDogPortal workspace and DogBreederDocs tools so puppies, families, applications, documents, and published information can share one breeder record instead of becoming separate data silos.</p>
                   <dl>
                     <div><dt>Setup</dt><dd>$89 once, including one available non-premium .com</dd></div>
-                    <div><dt>Monthly</dt><dd>$20 for the complete managed website service</dd></div>
+                    <div><dt>Monthly</dt><dd>$20 for the connected breeder website service</dd></div>
+                    <div><dt>Connected account</dt><dd>MyDogPortal + DogBreederDocs access under the breeder identity</dd></div>
                     <div><dt>Domain renewal</dt><dd>$39/year, billed separately before renewal</dd></div>
                     <div><dt>Business email</dt><dd>Two domain-branded addresses with the connected domain</dd></div>
                   </dl>
@@ -218,9 +268,9 @@ export default function Home() {
             </div>
 
             <div className="addons-heading">
-              <p className="eyebrow">COMPLETELY OPTIONAL ADD-ONS</p>
-              <h3>Extra help is available when you want it—not because the website requires it.</h3>
-              <p>None of these add-ons is required to build, launch, host, or operate your website.</p>
+              <p className="eyebrow">ADDITIONAL SERVICES</p>
+              <h3>Hands-on design help and Business Voice are available separately.</h3>
+              <p>Add them when they fit the breeder's needs.</p>
             </div>
             <div className="addons-grid">
               {websiteAddOns.map((addOn) => (
@@ -229,17 +279,17 @@ export default function Home() {
                   <strong>{addOn.price}</strong>
                   <small>{addOn.recurring}</small>
                   <p>{addOn.description}</p>
-                  <Link href={`/start?service=${addOn.id}`}>Request optional add-on <ArrowRight size={15} /></Link>
+                  <Link href={`/start?service=${addOn.id}`}>Request service <ArrowRight size={15} /></Link>
                 </article>
               ))}
             </div>
-            <p className="pricing-fineprint">Optional means optional: these services are not prerequisites for your website. Business Voice usage is metered separately. Premium domains are outside the included .com registration and require separate approval and pricing.</p>
+            <p className="pricing-fineprint">Business Voice usage is metered separately. Premium domains are outside the included .com registration and require separate approval and pricing.</p>
           </div>
         </section>
 
         <section className="section final-cta">
           <div className="shell final-cta-inner">
-            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Start with your own .com and build the website with BreederWeb Designer.</h2></div>
+            <div><p className="eyebrow">READY WHEN YOU ARE</p><h2>Start with your own .com and one connected breeder account.</h2></div>
             <Link className="button button-primary" href="#pricing">Start Your Website <ArrowRight size={18} /></Link>
           </div>
         </section>
