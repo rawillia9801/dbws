@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, LoaderCircle } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { CheckCircle2, Globe2, LoaderCircle } from "lucide-react";
+import { tryNormalizeComDomain } from "@/lib/domain";
+import styles from "./paypal-checkout.module.css";
 
-type PaymentStatus = "loading" | "ready" | "processing" | "success" | "error";
+type PaymentStatus = "idle" | "loading" | "ready" | "processing" | "success" | "error";
 
 type PayPalButtons = {
   render: (target: HTMLElement) => Promise<void>;
@@ -15,12 +17,24 @@ type PayPalWindow = Window & {
   paypal?: {
     Buttons: (options: {
       style: { color: "gold"; label: "subscribe"; layout: "vertical"; shape: "rect" };
-      createSubscription: (_data: unknown, actions: { subscription: { create: (input: { plan_id: string }) => Promise<string> } }) => Promise<string>;
+      createSubscription: (_data: unknown, actions: { subscription: { create: (input: { plan_id: string; custom_id: string }) => Promise<string> } }) => Promise<string>;
       onApprove: (data: { subscriptionID?: string }) => Promise<void>;
       onCancel: () => void;
       onError: (error: unknown) => void;
     }) => PayPalButtons;
   };
+};
+
+type CheckoutConfig = {
+  clientId: string;
+  environment: "live" | "sandbox";
+  planId: string;
+  planStatus: string;
+  setupFee: string;
+  monthlyPrice: string;
+  setupFeeFailureAction: string;
+  annualDomainRenewal: string;
+  annualDomainRenewalBilling: "separate";
 };
 
 let paypalScriptPromise: Promise<void> | null = null;
@@ -53,23 +67,47 @@ async function readError(response: Response, fallback: string) {
   return body.error || fallback;
 }
 
+function isProductionHost() {
+  return window.location.hostname === "dogbreederweb.site" || window.location.hostname === "www.dogbreederweb.site";
+}
+
 export function PayPalCheckout() {
   const buttonHost = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<PaymentStatus>("loading");
-  const [message, setMessage] = useState("Preparing secure monthly checkout…");
+  const [domainInput, setDomainInput] = useState("");
+  const [checkoutDomain, setCheckoutDomain] = useState<string | null>(null);
+  const [status, setStatus] = useState<PaymentStatus>("idle");
+  const [message, setMessage] = useState("Enter your preferred .com before continuing to PayPal.");
 
   useEffect(() => {
-    if (!buttonHost.current) return;
+    if (!checkoutDomain || !buttonHost.current) return;
 
     let active = true;
     let buttons: PayPalButtons | null = null;
     const host = buttonHost.current;
+    host.replaceChildren();
 
     async function initialize() {
       try {
+        setStatus("loading");
+        setMessage("Verifying the live website plan…");
         const configResponse = await fetch("/api/paypal/subscription", { cache: "no-store" });
         if (!configResponse.ok) throw new Error(await readError(configResponse, "PayPal checkout is being connected."));
-        const config = (await configResponse.json()) as { clientId: string; environment: "live" | "sandbox"; planId: string };
+        const config = (await configResponse.json()) as CheckoutConfig;
+
+        if (isProductionHost() && config.environment !== "live") {
+          throw new Error("Live PayPal checkout is not configured for the production website.");
+        }
+        if (
+          config.planStatus.toUpperCase() !== "ACTIVE" ||
+          config.setupFee !== "89.00" ||
+          config.monthlyPrice !== "20.00" ||
+          config.setupFeeFailureAction.toUpperCase() !== "CANCEL" ||
+          config.annualDomainRenewal !== "39.00" ||
+          config.annualDomainRenewalBilling !== "separate"
+        ) {
+          throw new Error("The PayPal website plan does not match the published pricing.");
+        }
+
         await loadPayPalScript(config.clientId);
         const paypal = (window as PayPalWindow).paypal;
         if (!paypal) throw new Error("PayPal checkout is unavailable.");
@@ -79,24 +117,27 @@ export function PayPalCheckout() {
           createSubscription: async (_data, actions) => {
             if (active) {
               setStatus("processing");
-              setMessage("Opening PayPal subscription approval…");
+              setMessage(`Opening PayPal for ${checkoutDomain}…`);
             }
-            return actions.subscription.create({ plan_id: config.planId });
+            return actions.subscription.create({
+              plan_id: config.planId,
+              custom_id: checkoutDomain,
+            });
           },
           onApprove: async ({ subscriptionID }) => {
             try {
               if (!subscriptionID) throw new Error("PayPal did not return a subscription ID.");
-              if (active) setMessage("Confirming your website plan…");
+              if (active) setMessage("Confirming the subscription and domain request…");
               const response = await fetch("/api/paypal/subscription", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subscriptionId: subscriptionID }),
+                body: JSON.stringify({ subscriptionId: subscriptionID, requestedDomain: checkoutDomain }),
               });
               if (!response.ok) throw new Error(await readError(response, "The subscription could not be confirmed."));
-              const result = (await response.json()) as { firstName?: string };
+              const result = (await response.json()) as { firstName?: string; requestedDomain: string };
               if (!active) return;
               setStatus("success");
-              setMessage(result.firstName ? `You’re subscribed, ${result.firstName}.` : "Your website plan is active.");
+              setMessage(result.firstName ? `You’re subscribed, ${result.firstName}. ${result.requestedDomain} is attached to your request.` : `Your website service is approved and ${result.requestedDomain} is attached to your request.`);
             } catch (error) {
               if (!active) return;
               setStatus("error");
@@ -118,7 +159,7 @@ export function PayPalCheckout() {
         await buttons.render(host);
         if (active) {
           setStatus("ready");
-          setMessage("$17.95 billed monthly through PayPal. Cancel anytime in PayPal.");
+          setMessage("$89 setup is charged when the subscription starts, then $20/month. The $39 domain renewal is billed separately each year before renewal.");
         }
       } catch (error) {
         if (!active) return;
@@ -133,15 +174,37 @@ export function PayPalCheckout() {
       void buttons?.close().catch(() => undefined);
       host.replaceChildren();
     };
-  }, []);
+  }, [checkoutDomain]);
 
-  if (status === "success") {
+  function prepareDomain(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const result = tryNormalizeComDomain(domainInput);
+    if (!result.domain) {
+      setStatus("error");
+      setMessage(result.error);
+      return;
+    }
+
+    setDomainInput(result.domain);
+    setCheckoutDomain(result.domain);
+    setStatus("loading");
+    setMessage(`Preparing PayPal for ${result.domain}…`);
+  }
+
+  function changeDomain() {
+    setCheckoutDomain(null);
+    setStatus("idle");
+    setMessage("Enter your preferred .com before continuing to PayPal.");
+  }
+
+  if (status === "success" && checkoutDomain) {
     return (
       <div className="checkout-success" role="status">
         <CheckCircle2 size={22} />
         <div>
           <strong>{message}</strong>
-          <Link href="/login?next=/builder">Sign in and build your website →</Link>
+          <span>We confirm availability and non-premium status before registration. The $39 annual domain renewal is billed separately before renewal.</span>
+          <Link href="/login?next=/builder">Sign in or create your breeder account →</Link>
         </div>
       </div>
     );
@@ -149,12 +212,38 @@ export function PayPalCheckout() {
 
   return (
     <div className="paypal-checkout">
+      {!checkoutDomain ? (
+        <form className={styles.domainForm} onSubmit={prepareDomain}>
+          <label htmlFor="preferred-domain">Preferred non-premium .com</label>
+          <div className={styles.inputRow}>
+            <span aria-hidden="true"><Globe2 size={17} /></span>
+            <input
+              id="preferred-domain"
+              value={domainInput}
+              onChange={(event) => setDomainInput(event.target.value)}
+              placeholder="yourkennel.com"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="url"
+              required
+            />
+            <button type="submit">Continue</button>
+          </div>
+          <small>The $89 setup includes registration of one available, non-premium .com. We verify availability and non-premium status before registration.</small>
+        </form>
+      ) : (
+        <div className={styles.domainSummary}>
+          <span>PayPal subscription for <strong>{checkoutDomain}</strong></span>
+          <button type="button" onClick={changeDomain} disabled={status === "processing"}>Change domain</button>
+        </div>
+      )}
       <div className="paypal-button-host" ref={buttonHost} aria-label="Subscribe with PayPal" />
       <p className={`checkout-status ${status}`} role="status" aria-live="polite">
         {(status === "loading" || status === "processing") && <LoaderCircle className="spin" size={14} />}
         {message}
       </p>
-      {status === "error" && <Link className="checkout-fallback" href="/start?service=website-plan">Request the website plan</Link>}
+      {status === "error" && checkoutDomain && <button className={styles.retryButton} type="button" onClick={changeDomain}>Review the domain and try again</button>}
     </div>
   );
 }

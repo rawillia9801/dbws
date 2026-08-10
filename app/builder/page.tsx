@@ -10,15 +10,12 @@ export const dynamic = "force-dynamic";
 
 export default async function BuilderPage() {
   const supabase = await createServerSupabaseClient();
-  const startingPoint = getTemplate("modern-meadow");
-
-  if (!supabase) {
-    return <Builder initialConfig={cloneConfig(startingPoint.config)} initialSiteId={null} initialSlug="my-breeder-site" initialPublished={false} userEmail="Preview mode" />;
-  }
+  if (!supabase) redirect("/login?next=/builder");
 
   const { data: authData } = await supabase.auth.getUser();
   if (!authData.user) redirect("/login?next=/builder");
 
+  const startingPoint = getTemplate("modern-meadow");
   const { data: site } = await supabase
     .from("breeder_sites")
     .select("id, slug, config")

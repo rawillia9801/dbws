@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeComDomain } from "@/lib/domain";
 import { websitePlan } from "@/lib/pricing";
 
 type PayPalErrorBody = {
@@ -8,12 +9,43 @@ type PayPalErrorBody = {
 };
 
 type PayPalProduct = { id: string; name?: string };
-type PayPalPlan = { id: string; name?: string; status?: string };
+type PayPalPlanSummary = { id: string; name?: string; status?: string };
+
+const PRODUCT_NAME = "Dog Breeder Web Complete Website Service";
+const PLAN_NAME = "Dog Breeder Web | $89 Setup + $20 Monthly | 2026-08";
+const PRODUCT_REQUEST_ID = "dbws-complete-website-product-2026-v1";
+const PLAN_REQUEST_ID = "dbws-live-89-setup-20-monthly-2026-08-v1";
+
+const moneySchema = z.object({
+  value: z.string(),
+  currency_code: z.string(),
+});
+
+const planSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().optional(),
+  status: z.string().min(1),
+  billing_cycles: z.array(z.object({
+    frequency: z.object({
+      interval_unit: z.string(),
+      interval_count: z.number(),
+    }),
+    tenure_type: z.string(),
+    sequence: z.number(),
+    total_cycles: z.number().optional(),
+    pricing_scheme: z.object({ fixed_price: moneySchema }),
+  })),
+  payment_preferences: z.object({
+    setup_fee: moneySchema,
+    setup_fee_failure_action: z.string(),
+  }),
+});
 
 const subscriptionSchema = z.object({
   id: z.string().min(1),
   plan_id: z.string().min(1),
   status: z.string().min(1),
+  custom_id: z.string().optional(),
   subscriber: z.object({
     name: z.object({ given_name: z.string().optional() }).optional(),
     email_address: z.string().optional(),
@@ -88,9 +120,8 @@ async function paypalRequest<T>(path: string, init: RequestInit = {}, requestId?
 }
 
 async function ensureProduct() {
-  const productName = "Dog Breeder Web Website Plan";
   const listed = await paypalRequest<{ products?: PayPalProduct[] }>("/v1/catalogs/products?page_size=100&total_required=true");
-  const existing = listed.products?.find((product) => product.name === productName && product.id);
+  const existing = listed.products?.find((product) => product.name === PRODUCT_NAME && product.id);
   if (existing?.id) return existing.id;
 
   const created = await paypalRequest<PayPalProduct>(
@@ -98,52 +129,95 @@ async function ensureProduct() {
     {
       method: "POST",
       body: JSON.stringify({
-        name: productName,
-        description: "AI breeder website builder, managed hosting, SSL, and two branded business emails.",
+        name: PRODUCT_NAME,
+        description: "Complete breeder website service with BreederWeb Designer, managed hosting, domain, branded email, publishing, forms, embeds, and version history.",
         type: "SERVICE",
       }),
     },
-    "dbws-website-product-v1",
+    PRODUCT_REQUEST_ID,
   );
   if (!created.id) throw new PayPalError("PayPal did not return a product ID.", 502);
   return created.id;
+}
+
+function validatePlanConfiguration(input: unknown) {
+  const plan = planSchema.parse(input);
+  const regularCycle = plan.billing_cycles.find((cycle) => cycle.tenure_type.toUpperCase() === "REGULAR");
+  const monthlyPrice = regularCycle?.pricing_scheme.fixed_price;
+  const setupFee = plan.payment_preferences.setup_fee;
+
+  const correct =
+    plan.name === PLAN_NAME &&
+    plan.status.toUpperCase() === "ACTIVE" &&
+    regularCycle?.frequency.interval_unit.toUpperCase() === "MONTH" &&
+    regularCycle.frequency.interval_count === 1 &&
+    Number(monthlyPrice?.value) === Number(websitePlan.monthlyPrice) &&
+    monthlyPrice?.currency_code.toUpperCase() === "USD" &&
+    Number(setupFee.value) === Number(websitePlan.setupFee) &&
+    setupFee.currency_code.toUpperCase() === "USD" &&
+    plan.payment_preferences.setup_fee_failure_action.toUpperCase() === "CANCEL";
+
+  if (!correct) {
+    throw new PayPalError("The configured PayPal website plan does not match the required pricing.", 409);
+  }
+
+  return {
+    planId: plan.id,
+    name: plan.name ?? PLAN_NAME,
+    status: plan.status,
+    setupFee: Number(setupFee.value).toFixed(2),
+    monthlyPrice: Number(monthlyPrice?.value).toFixed(2),
+    setupFeeFailureAction: plan.payment_preferences.setup_fee_failure_action,
+  };
+}
+
+async function readPlan(planId: string) {
+  const body = await paypalRequest<unknown>(`/v1/billing/plans/${encodeURIComponent(planId)}`);
+  return validatePlanConfiguration(body);
 }
 
 let websitePlanPromise: Promise<string> | null = null;
 
 async function createOrFindWebsitePlan() {
   const productId = await ensureProduct();
-  const planName = "Dog Breeder Web Monthly";
-  const listed = await paypalRequest<{ plans?: PayPalPlan[] }>(`/v1/billing/plans?product_id=${encodeURIComponent(productId)}&page_size=20`);
-  const existing = listed.plans?.find((plan) => plan.name === planName && plan.id && plan.status !== "INACTIVE");
-  if (existing?.id) return existing.id;
+  const listed = await paypalRequest<{ plans?: PayPalPlanSummary[] }>(`/v1/billing/plans?product_id=${encodeURIComponent(productId)}&page_size=20&total_required=true`);
+  const existing = listed.plans?.find((plan) => plan.name === PLAN_NAME && plan.id && plan.status !== "INACTIVE");
 
-  const created = await paypalRequest<PayPalPlan>(
+  if (existing?.id) {
+    await readPlan(existing.id);
+    return existing.id;
+  }
+
+  const created = await paypalRequest<PayPalPlanSummary>(
     "/v1/billing/plans",
     {
       method: "POST",
       body: JSON.stringify({
         product_id: productId,
-        name: planName,
+        name: PLAN_NAME,
         description: websitePlan.description,
+        status: "ACTIVE",
         billing_cycles: [
           {
             frequency: { interval_unit: "MONTH", interval_count: 1 },
             tenure_type: "REGULAR",
             sequence: 1,
             total_cycles: 0,
-            pricing_scheme: { fixed_price: { value: websitePlan.price, currency_code: "USD" } },
+            pricing_scheme: { fixed_price: { value: websitePlan.monthlyPrice, currency_code: "USD" } },
           },
         ],
         payment_preferences: {
           auto_bill_outstanding: true,
+          setup_fee: { value: websitePlan.setupFee, currency_code: "USD" },
+          setup_fee_failure_action: "CANCEL",
           payment_failure_threshold: 3,
         },
       }),
     },
-    "dbws-website-monthly-plan-v1",
+    PLAN_REQUEST_ID,
   );
   if (!created.id) throw new PayPalError("PayPal did not return a billing plan ID.", 502);
+  await readPlan(created.id);
   return created.id;
 }
 
@@ -155,29 +229,44 @@ export async function getWebsitePlanId() {
   return websitePlanPromise;
 }
 
+export async function getWebsitePlanVerification() {
+  const planId = await getWebsitePlanId();
+  return readPlan(planId);
+}
+
 export function getPayPalClientConfig() {
   const { clientId, environment } = getPayPalConfig();
   return { clientId, environment };
 }
 
-export async function verifyWebsiteSubscription(subscriptionId: string) {
+export async function verifyWebsiteSubscription(subscriptionId: string, requestedDomain: string) {
   if (!/^I-[A-Z0-9]+$/i.test(subscriptionId)) {
     throw new PayPalError("This PayPal subscription is not valid.", 400);
   }
 
+  const normalizedDomain = normalizeComDomain(requestedDomain);
   const expectedPlanId = await getWebsitePlanId();
   const body = await paypalRequest<unknown>(`/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`);
   const subscription = subscriptionSchema.parse(body);
+
+  if (subscription.id !== subscriptionId) {
+    throw new PayPalError("PayPal returned a different subscription than the one approved.", 409);
+  }
   if (subscription.plan_id !== expectedPlanId) {
     throw new PayPalError("This subscription does not match the Dog Breeder Web plan.", 409);
   }
-  if (!["APPROVAL_PENDING", "APPROVED", "ACTIVE"].includes(subscription.status.toUpperCase())) {
+  if (!["APPROVED", "ACTIVE"].includes(subscription.status.toUpperCase())) {
     throw new PayPalError("PayPal has not approved this subscription.", 409);
+  }
+  if (subscription.custom_id !== normalizedDomain) {
+    throw new PayPalError("The PayPal subscription does not match the requested domain.", 409);
   }
 
   return {
     subscriptionId: subscription.id,
-    status: subscription.status,
+    planId: subscription.plan_id,
+    status: subscription.status.toUpperCase(),
+    requestedDomain: normalizedDomain,
     firstName: subscription.subscriber?.name?.given_name,
     email: subscription.subscriber?.email_address,
   };
