@@ -72,7 +72,11 @@ export async function GET() {
         setupFeeFailureAction: plan.setupFeeFailureAction,
         annualDomainRenewal: websitePlan.domainRenewal,
         annualDomainRenewalBilling: "separate",
-        connectedAccess: ["dogbreederweb", "mydogportal", "dogbreederdocs"],
+        connectedAccess: {
+          website: true,
+          myDogPortalCompanion: true,
+          dogBreederDocs: "available separately or included with eligible MyDogPortal upgrades",
+        },
       },
       { headers: { "Cache-Control": "no-store" } },
     );
