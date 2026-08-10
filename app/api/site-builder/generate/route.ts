@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { generateText, Output } from "ai";
+import { generateText, Output, type ModelMessage } from "ai";
 import { NextResponse } from "next/server";
 import { finalizeDomainForUser } from "@/lib/domain-infrastructure";
 import { provisionIncludedMailboxes } from "@/lib/email-provisioning";
@@ -9,7 +9,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const DEFAULT_MODEL = "claude-sonnet-4-5";
+const DEFAULT_MODEL = "claude-sonnet-5";
 
 const systemPrompt = `You are BreederWeb Designer, the interactive website builder inside Dog Breeder Web.
 
@@ -35,7 +35,7 @@ If the breeder asks to design or redesign the website, make substantive configur
 
 function configuredModel() {
   const value = process.env.CLAUDE_SITE_BUILDER_MODEL?.trim();
-  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model") || value === "claude-sonnet-5") return DEFAULT_MODEL;
+  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model")) return DEFAULT_MODEL;
   return value;
 }
 
@@ -45,10 +45,20 @@ function configuredApiKey() {
 }
 
 async function generateWebsite(model: string, prompt: string, currentConfig: unknown) {
+  const messages: ModelMessage[] = [
+    {
+      role: "system",
+      content: systemPrompt,
+      providerOptions: { anthropic: { cacheControl: { type: "ephemeral", ttl: "1h" } } },
+    },
+    {
+      role: "user",
+      content: `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`,
+    },
+  ];
   return generateText({
     model: anthropic(model),
-    system: systemPrompt,
-    prompt: `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`,
+    messages,
     output: Output.object({ schema: builderResponseSchema }),
     maxOutputTokens: 6000,
   });
