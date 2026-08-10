@@ -7,7 +7,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const DEFAULT_MODEL = "claude-sonnet-5";
+const DEFAULT_MODEL = "claude-sonnet-4-5";
 
 const systemPrompt = `You are the website copilot inside Dog Breeder Web, a structured website builder for ethical dog breeders.
 
@@ -24,8 +24,23 @@ Rules:
 
 function configuredModel() {
   const value = process.env.CLAUDE_SITE_BUILDER_MODEL?.trim();
-  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model")) return DEFAULT_MODEL;
+  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model") || value === "claude-sonnet-5") return DEFAULT_MODEL;
   return value;
+}
+
+function configuredApiKey() {
+  const value = process.env.ANTHROPIC_API_KEY?.trim();
+  return value && !/^your[_-]/i.test(value) ? value : "";
+}
+
+async function generateWebsite(model: string, prompt: string, currentConfig: unknown) {
+  return generateText({
+    model: anthropic(model),
+    system: systemPrompt,
+    prompt: `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`,
+    output: Output.object({ schema: builderResponseSchema }),
+    maxOutputTokens: 6000,
+  });
 }
 
 export async function POST(request: Request) {
@@ -33,13 +48,13 @@ export async function POST(request: Request) {
   if (!supabase) return NextResponse.json({ error: "Supabase is not configured." }, { status: 503 });
 
   const { data: authData } = await supabase.auth.getUser();
-  if (!authData.user) return NextResponse.json({ error: "Sign in to use the website copilot." }, { status: 401 });
+  if (!authData.user) return NextResponse.json({ error: "Sign in to use BreederWeb Designer." }, { status: 401 });
 
   const parsed = builderRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Check the website details and try again." }, { status: 400 });
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "BreederWeb Designer is ready, but the ANTHROPIC_API_KEY still needs to be added in Vercel." }, { status: 503 });
+  if (!configuredApiKey()) {
+    return NextResponse.json({ error: "BreederWeb Designer needs its Anthropic API key configured in the production environment." }, { status: 503 });
   }
 
   if (parsed.data.siteId) {
@@ -48,49 +63,68 @@ export async function POST(request: Request) {
   }
 
   const generationId = crypto.randomUUID();
-  const model = configuredModel();
+  const requestedModel = configuredModel();
+  let trackedGeneration = false;
   const { error: generationError } = await supabase.from("ai_site_generations").insert({
     id: generationId,
     site_id: parsed.data.siteId ?? null,
     owner_id: authData.user.id,
     prompt: parsed.data.prompt,
-    model,
+    model: requestedModel,
     status: "pending",
   });
 
   if (generationError) {
-    console.error("AI generation record failed", { code: generationError.code });
-    return NextResponse.json({ error: "The website copilot could not start a saved generation." }, { status: 500 });
+    console.warn("AI generation history could not be recorded; continuing with the website change", { code: generationError.code });
+  } else {
+    trackedGeneration = true;
   }
 
   try {
-    const result = await generateText({
-      model: anthropic(model),
-      system: systemPrompt,
-      prompt: `Breeder request:\n${parsed.data.prompt}\n\nCurrent website configuration:\n${JSON.stringify(parsed.data.currentConfig)}`,
-      output: Output.object({ schema: builderResponseSchema }),
-      maxOutputTokens: 6000,
-      providerOptions: { anthropic: { effort: "low" } },
-    });
+    let model = requestedModel;
+    let result;
+    try {
+      result = await generateWebsite(model, parsed.data.prompt, parsed.data.currentConfig);
+    } catch (firstError) {
+      const message = firstError instanceof Error ? firstError.message : "";
+      if (model !== DEFAULT_MODEL && /model|not found|invalid|unsupported/i.test(message)) {
+        console.warn("Configured BreederWeb Designer model failed; retrying with supported default", { configuredModel: model });
+        model = DEFAULT_MODEL;
+        result = await generateWebsite(model, parsed.data.prompt, parsed.data.currentConfig);
+      } else {
+        throw firstError;
+      }
+    }
 
-    await supabase.from("ai_site_generations").update({
-      status: "complete",
-      result: result.output,
-      token_usage: result.usage,
-      completed_at: new Date().toISOString(),
-    }).eq("id", generationId).eq("owner_id", authData.user.id);
+    if (trackedGeneration) {
+      await supabase.from("ai_site_generations").update({
+        status: "complete",
+        model,
+        result: result.output,
+        token_usage: result.usage,
+        completed_at: new Date().toISOString(),
+      }).eq("id", generationId).eq("owner_id", authData.user.id);
+    }
 
     return NextResponse.json({ ...result.output, generationId });
   } catch (error) {
     const errorCode = error instanceof Error ? error.name.slice(0, 100) : "unknown_error";
     const errorMessage = error instanceof Error ? error.message : "";
-    console.error("BreederWeb Designer site generation failed", { generationId, errorCode, model, errorMessage });
-    await supabase.from("ai_site_generations").update({ status: "failed", error_code: errorCode, completed_at: new Date().toISOString() }).eq("id", generationId).eq("owner_id", authData.user.id);
-
-    if (/model|not found|invalid/i.test(errorMessage)) {
-      return NextResponse.json({ error: `BreederWeb Designer model configuration is invalid. Set CLAUDE_SITE_BUILDER_MODEL to ${DEFAULT_MODEL}.` }, { status: 503 });
+    console.error("BreederWeb Designer site generation failed", { generationId, errorCode, model: requestedModel, errorMessage });
+    if (trackedGeneration) {
+      await supabase.from("ai_site_generations").update({ status: "failed", error_code: errorCode, completed_at: new Date().toISOString() }).eq("id", generationId).eq("owner_id", authData.user.id);
     }
 
-    return NextResponse.json({ error: "BreederWeb Designer could not complete that change. Try again in a moment." }, { status: 502 });
+    if (/authentication|api key|unauthorized|401/i.test(errorMessage)) {
+      return NextResponse.json({ error: "BreederWeb Designer could not authenticate with the AI service. Check the production ANTHROPIC_API_KEY." }, { status: 503 });
+    }
+    if (/model|not found|invalid|unsupported/i.test(errorMessage)) {
+      return NextResponse.json({ error: `BreederWeb Designer could not use the configured model. The supported default is ${DEFAULT_MODEL}.` }, { status: 503 });
+    }
+    if (/rate|credit|balance|quota|429/i.test(errorMessage)) {
+      return NextResponse.json({ error: "BreederWeb Designer reached an AI usage limit. Check the Anthropic account balance or rate limit and try again." }, { status: 503 });
+    }
+
+    return NextResponse.json({ error: "BreederWeb Designer could not complete that website change. Please try again." }, { status: 502 });
   }
 }
