@@ -27,3 +27,18 @@ export async function finalizeRegisteredDomain(subscriptionId: string, domain: s
     return { status: manual ? "manual_attention" as const : "failed" as const };
   }
 }
+
+export async function finalizeDomainForUser(userId: string) {
+  const admin = createAdminSupabaseClient();
+  if (!admin) return { status: "manual_attention" as const };
+  const { data: subscription } = await admin.from("website_subscriptions")
+    .select("paypal_subscription_id,requested_domain,domain_registration_status")
+    .eq("owner_id", userId)
+    .in("paypal_status", ["APPROVED", "ACTIVE"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!subscription) throw new Error("An active Dog Breeder Web subscription is required.");
+  if (subscription.domain_registration_status !== "registered") return { status: subscription.domain_registration_status || "pending", domain: subscription.requested_domain };
+  return { domain: subscription.requested_domain, ...(await finalizeRegisteredDomain(subscription.paypal_subscription_id, subscription.requested_domain)) };
+}
