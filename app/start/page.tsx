@@ -43,11 +43,12 @@ export default async function StartPage({
           <section className="start-copy">
             <p className="eyebrow">OPTIONAL WEBSITE SERVICES</p>
             <h1>{requestedService === "general" ? "Get extra launch help only if you want it." : `${requestedServiceLabel}—only if you want it.`}</h1>
-            <p>The complete website service is $89 setup, $20 per month, and $39 per year for domain renewal. It already includes your available non-premium .com, BreederWeb Designer, managed Vercel hosting, SSL, updates, two domain-branded business email addresses, publishing, forms, embeds, mobile-ready pages, brand controls, and version history.</p>
+            <p>The complete website service is $149 setup, $24.95 per month, and $39 per year for domain renewal after the included first year. It already includes your available non-premium .com for year one, BreederWeb Designer, managed Vercel hosting, SSL, updates, two domain-branded business email addresses, publishing, forms, embeds, mobile-ready pages, brand controls, and version history.</p>
             <div className="start-points">
-              <div><Check size={19} />$89 setup includes one available, non-premium .com</div>
-              <div><Check size={19} />$20/month operates the complete managed website service</div>
-              <div><Check size={19} />$39/year domain renewal is billed separately before renewal</div>
+              <div><Check size={19} />$149 setup includes first-year registration of one available, non-premium .com</div>
+              <div><Check size={19} />$24.95/month operates the complete managed website service</div>
+              <div><Check size={19} />$39/year domain renewal is billed separately before renewal after year one</div>
+              <div><Check size={19} />MyDogPortal and DogBreederDocs integrations are available; their paid access is separate unless specifically bundled</div>
               <div><Check size={19} />Personalization, custom design, and Business Voice are completely optional</div>
               <div><Check size={19} />No add-on is required to build, launch, host, or operate the website</div>
             </div>
