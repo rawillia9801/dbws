@@ -126,21 +126,21 @@ export async function provisionConnectedPlatform(input: {
     .upsert(subscriptionRow, { onConflict: "paypal_subscription_id" });
   if (subscriptionError) throw new Error(`Website subscription provisioning failed: ${subscriptionError.code}`);
 
-  const entitlement = {
+  const entitlements = ["dogbreederweb", "mydogportal"].map((entitlementKey) => ({
     auth_user_id: input.userId,
     kennel_id: kennel.id,
-    entitlement_key: "dogbreederweb",
+    entitlement_key: entitlementKey,
     source: "dogbreederweb_subscription",
     source_reference: input.subscription.subscriptionId,
     status: "active",
     ends_at: null,
     updated_at: new Date().toISOString(),
-  };
+  }));
 
   const { error: entitlementError } = await admin
     .from("platform_entitlements")
-    .upsert(entitlement, { onConflict: "source,source_reference,entitlement_key" });
-  if (entitlementError) throw new Error(`Website entitlement provisioning failed: ${entitlementError.code}`);
+    .upsert(entitlements, { onConflict: "source,source_reference,entitlement_key" });
+  if (entitlementError) throw new Error(`Connected website entitlement provisioning failed: ${entitlementError.code}`);
 
   return { kennelId: kennel.id, kennelSlug: kennel.slug };
 }
