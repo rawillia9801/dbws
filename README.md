@@ -7,7 +7,7 @@ Production website and structured breeder-site studio for [dogbreederweb.site](h
 - Next.js 16 and React 19
 - Supabase Auth and Postgres for breeder-owned drafts, published sites, version history, website subscriptions, AI generations, inquiries, and shared breeder identity
 - Anthropic through the Vercel AI SDK for the customer-facing BreederWeb Designer
-- PayPal Subscriptions for the $89 setup fee plus $20/month connected website service
+- PayPal Subscriptions for the $149 setup fee plus $24.95/month website service
 - Vercel for production deployment
 - TypeScript and Zod validation
 
@@ -25,17 +25,19 @@ PAYPAL_ENVIRONMENT=live
 NEXT_PUBLIC_SITE_URL=https://dogbreederweb.site
 ```
 
-`SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, and `PAYPAL_CLIENT_SECRET` are server-only and must never be prefixed with `NEXT_PUBLIC_` or committed. The Supabase service-role key is used only for trusted connected-platform provisioning after the server verifies the PayPal subscription. The PayPal client ID is returned by the server only as required by PayPal's browser SDK. BreederWeb Designer falls back to `claude-sonnet-5` when `CLAUDE_SITE_BUILDER_MODEL` is missing or still contains a placeholder value.
+`SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, and `PAYPAL_CLIENT_SECRET` are server-only and must never be prefixed with `NEXT_PUBLIC_` or committed. The Supabase service-role key is used only for trusted website-subscription provisioning and shared-account integration. The PayPal client ID is returned by the server only as required by PayPal's browser SDK. BreederWeb Designer falls back to `claude-sonnet-5` when `CLAUDE_SITE_BUILDER_MODEL` is missing or still contains a placeholder value.
 
 ## Product model
 
-The connected website service costs:
+The complete Dog Breeder Web website service costs:
 
-- $89 one-time setup, including registration of one available, non-premium `.com`
-- $20 per month for BreederWeb Designer, managed Vercel hosting, SSL, updates, two business email addresses branded to the connected domain, puppy and litter publishing, applications and contact forms, embeddable website sections, mobile-ready pages, brand controls, version history, connected MyDogPortal breeder-workspace access, and DogBreederDocs.Online document-workspace access
-- $39 per year for domain renewal, billed separately each year before renewal
+- $149 one-time setup, including first-year registration of one available, non-premium `.com`
+- $24.95 per month for BreederWeb Designer, managed Vercel hosting, SSL, updates, two business email addresses branded to the connected domain, puppy and litter publishing, applications and contact forms, embeddable website sections, mobile-ready pages, brand controls, and version history
+- $39 per year for managed standard `.com` renewal after the first year, billed separately before renewal
 
 A connected domain is required for kennel-branded email addresses. The included non-premium `.com` supplies that domain when it is available. The annual $39 domain renewal is deliberately not represented as a parallel PayPal billing cycle inside the monthly subscription.
+
+Dog Breeder Web is integration-ready for MyDogPortal and DogBreederDocs, but the $24.95 website subscription does not include the paid MyDogPortal operating-system subscription or standalone DogBreederDocs purchases. DogBreederDocs packet access may instead be included through an eligible MyDogPortal Professional or Studio subscription.
 
 Additional services:
 
@@ -48,22 +50,22 @@ Additional services:
 The intended customer experience is one breeder identity across three connected product surfaces:
 
 - `dogbreederweb.site` — public website building, publishing, domain, email, and BreederWeb Designer
-- `mydogportal.site` — breeder operating system, dogs, litters, puppies, applications, families, balances, updates, scheduling, records, and Puppy Portals
+- `mydogportal.site` — breeder operating system, dogs, litters, puppies, applications, families, balances, updates, scheduling, records, automation, and Puppy Portals
 - `dogbreederdocs.online` — state-aware breeder documents, reusable masters, branding, clause editing, and buyer/puppy paperwork
 
-A verified Dog Breeder Web subscription provisions the same Supabase breeder identity into the shared kennel/membership model, creates server-managed `platform_entitlements` for all three products, and grants an included complete DogBreederDocs packet. MyDogPortal recognizes the connected entitlement instead of requiring a second software checkout.
+A verified Dog Breeder Web subscription provisions or reuses the shared Supabase breeder identity and grants the `dogbreederweb` entitlement only. It does not silently grant MyDogPortal or DogBreederDocs paid-product entitlements. When the breeder separately subscribes to an eligible MyDogPortal plan, the connected products can use the same kennel identity and data relationships without requiring duplicated records.
 
-MyDogPortal is the authenticated operating hub. Website and document tools should be reachable from the same breeder account and should use the same breeder, puppy, family, and document records instead of requiring separate account creation or duplicated data entry.
+MyDogPortal remains the authenticated operating hub for breeders who subscribe to the OS. Dog Breeder Web remains fully usable as a standalone website service, while its integrations allow website publishing to use approved connected breeder data when the appropriate product access exists.
 
 ## PayPal flow
 
 1. The customer enters a preferred `.com` before PayPal opens.
 2. The app normalizes and validates the requested `.com` format.
-3. The live PayPal plan is uniquely named for the $89 setup + $20 monthly configuration.
-4. The plan uses `payment_preferences.setup_fee` for $89 and `setup_fee_failure_action: "CANCEL"`.
+3. The live PayPal plan is uniquely named for the $149 setup + $24.95 monthly configuration.
+4. The plan uses `payment_preferences.setup_fee` for $149 and `setup_fee_failure_action: "CANCEL"`.
 5. The requested domain is supplied to the PayPal subscription as `custom_id`.
 6. After approval, the server retrieves the subscription from PayPal and verifies its subscription ID, expected plan ID, APPROVED/ACTIVE status, and requested domain/custom ID.
-7. The verified subscription is attached to the authenticated Supabase user with a server-only admin client. The shared kennel/membership is created or reused, the requested domain is attached, connected product entitlements are granted, and the complete DogBreederDocs packet is marked included. If checkout occurs before sign-in, the verified identifiers are carried into the authenticated flow and re-verified server-side.
+7. The verified subscription is attached to the authenticated Supabase user with a server-only admin client. The shared kennel/membership is created or reused, the requested domain is attached, and the Dog Breeder Web entitlement is granted. MyDogPortal and DogBreederDocs paid access remain governed by their own eligible plans or purchases.
 
 ## Supabase
 
