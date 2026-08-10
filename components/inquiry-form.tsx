@@ -20,7 +20,7 @@ export function InquiryForm({ requestedService, requestedServiceLabel }: Inquiry
       <h2>{hasSpecificService ? `Request ${requestedServiceLabel}` : "Tell us about your program"}</h2>
       <p className="form-intro">
         {hasSpecificService
-          ? `${requestedServiceLabel} is completely optional. Your standard $89 setup + $20/month website service works without this add-on.`
+          ? `${requestedServiceLabel} is completely optional. Your standard $149 setup + $24.95/month website service works without this add-on.`
           : "Use this form for general website questions or optional launch help. The standard website service already includes everything required to build, launch, host, and operate your site."}
       </p>
       <input type="hidden" name="requestedService" value={requestedService} />
