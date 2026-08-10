@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { provisionConnectedPlatform } from "@/lib/connected-platform";
+import { finalizeRegisteredDomain } from "@/lib/domain-infrastructure";
 import { DomainValidationError, normalizeComDomain } from "@/lib/domain";
 import {
   getPayPalClientConfig,
@@ -75,10 +76,15 @@ export async function POST(request: Request) {
     const subscription = await verifyWebsiteSubscription(parsed.data.subscriptionId, requestedDomain);
     const provisioning = await connectSubscriptionToSignedInBreeder(subscription);
     const connectedToBreeder = Boolean(provisioning);
+    const infrastructure = provisioning?.domainRegistrationStatus === "registered"
+      ? await finalizeRegisteredDomain(subscription.subscriptionId, subscription.requestedDomain)
+      : null;
+
     const response = NextResponse.json({
       ...subscription,
       connectedToBreeder,
       provisioningStatus: provisioning?.domainRegistrationStatus ?? "waiting_for_account",
+      infrastructureStatus: infrastructure?.status ?? "waiting_for_registration",
       companionPlan: provisioning?.companionPlan ?? false,
     }, { headers: { "Cache-Control": "no-store" } });
 
