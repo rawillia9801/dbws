@@ -90,39 +90,6 @@ async function ensureKennel(
   return kennel;
 }
 
-async function grantDocumentPacket(
-  admin: NonNullable<ReturnType<typeof createAdminSupabaseClient>>,
-  userId: string,
-  subscriptionId: string,
-) {
-  const providerReference = `dbws:${subscriptionId}`;
-  const { data: existing, error: lookupError } = await admin
-    .from("dogdocs_purchases")
-    .select("id")
-    .eq("provider_reference", providerReference)
-    .maybeSingle();
-  if (lookupError) throw new Error(`Document entitlement lookup failed: ${lookupError.code}`);
-
-  if (existing) {
-    const { error } = await admin
-      .from("dogdocs_purchases")
-      .update({ payment_status: "included", amount_cents: 0 })
-      .eq("id", existing.id);
-    if (error) throw new Error(`Document entitlement update failed: ${error.code}`);
-    return;
-  }
-
-  const { error } = await admin.from("dogdocs_purchases").insert({
-    user_id: userId,
-    product_type: "packet",
-    template_id: null,
-    amount_cents: 0,
-    payment_status: "included",
-    provider_reference: providerReference,
-  });
-  if (error) throw new Error(`Document entitlement creation failed: ${error.code}`);
-}
-
 export async function provisionConnectedPlatform(input: {
   userId: string;
   email?: string;
@@ -148,8 +115,8 @@ export async function provisionConnectedPlatform(input: {
     paypal_status: input.subscription.status,
     requested_domain: input.subscription.requestedDomain,
     purchaser_email: input.subscription.email ?? input.email ?? null,
-    setup_fee_cents: 8900,
-    monthly_price_cents: 2000,
+    setup_fee_cents: 14900,
+    monthly_price_cents: 2495,
     annual_domain_renewal_cents: 3900,
     domain_renewal_billed_separately: true,
   };
@@ -159,23 +126,21 @@ export async function provisionConnectedPlatform(input: {
     .upsert(subscriptionRow, { onConflict: "paypal_subscription_id" });
   if (subscriptionError) throw new Error(`Website subscription provisioning failed: ${subscriptionError.code}`);
 
-  const entitlements = ["dogbreederweb", "mydogportal", "dogbreederdocs"].map((entitlementKey) => ({
+  const entitlement = {
     auth_user_id: input.userId,
     kennel_id: kennel.id,
-    entitlement_key: entitlementKey,
+    entitlement_key: "dogbreederweb",
     source: "dogbreederweb_subscription",
     source_reference: input.subscription.subscriptionId,
     status: "active",
     ends_at: null,
     updated_at: new Date().toISOString(),
-  }));
+  };
 
   const { error: entitlementError } = await admin
     .from("platform_entitlements")
-    .upsert(entitlements, { onConflict: "source,source_reference,entitlement_key" });
-  if (entitlementError) throw new Error(`Connected entitlement provisioning failed: ${entitlementError.code}`);
-
-  await grantDocumentPacket(admin, input.userId, input.subscription.subscriptionId);
+    .upsert(entitlement, { onConflict: "source,source_reference,entitlement_key" });
+  if (entitlementError) throw new Error(`Website entitlement provisioning failed: ${entitlementError.code}`);
 
   return { kennelId: kennel.id, kennelSlug: kennel.slug };
 }
