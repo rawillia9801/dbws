@@ -5,9 +5,9 @@ Production website and structured breeder-site studio for [dogbreederweb.site](h
 ## Stack
 
 - Next.js 16 and React 19
-- Supabase Auth and Postgres for breeder-owned drafts, published sites, version history, website subscriptions, AI generations, and inquiries
+- Supabase Auth and Postgres for breeder-owned drafts, published sites, version history, website subscriptions, AI generations, inquiries, and shared breeder identity
 - Anthropic through the Vercel AI SDK for the customer-facing BreederWeb Designer
-- PayPal Subscriptions for the $89 setup fee plus $20/month website service
+- PayPal Subscriptions for the $89 setup fee plus $20/month connected website service
 - Vercel for production deployment
 - TypeScript and Zod validation
 
@@ -17,30 +17,40 @@ Production website and structured breeder-site studio for [dogbreederweb.site](h
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
-CLAUDE_SITE_BUILDER_MODEL=your_server_side_model
+CLAUDE_SITE_BUILDER_MODEL=claude-sonnet-5
 PAYPAL_CLIENT_ID=your_paypal_client_id
 PAYPAL_CLIENT_SECRET=your_paypal_client_secret
 PAYPAL_ENVIRONMENT=live
 NEXT_PUBLIC_SITE_URL=https://dogbreederweb.site
 ```
 
-`ANTHROPIC_API_KEY` and `PAYPAL_CLIENT_SECRET` are server-only and must never be prefixed with `NEXT_PUBLIC_` or committed. The PayPal client ID is returned by the server only as required by PayPal's browser SDK.
+`ANTHROPIC_API_KEY` and `PAYPAL_CLIENT_SECRET` are server-only and must never be prefixed with `NEXT_PUBLIC_` or committed. The PayPal client ID is returned by the server only as required by PayPal's browser SDK. BreederWeb Designer falls back to `claude-sonnet-5` when `CLAUDE_SITE_BUILDER_MODEL` is missing or still contains a placeholder value.
 
 ## Product model
 
-The complete website service costs:
+The connected website service costs:
 
 - $89 one-time setup, including registration of one available, non-premium `.com`
-- $20 per month for BreederWeb Designer, managed Vercel hosting, SSL, updates, two business email addresses branded to the connected domain, puppy and litter publishing, applications and contact forms, embeddable website sections, mobile-ready pages, brand controls, and version history
+- $20 per month for BreederWeb Designer, managed Vercel hosting, SSL, updates, two business email addresses branded to the connected domain, puppy and litter publishing, applications and contact forms, embeddable website sections, mobile-ready pages, brand controls, version history, connected MyDogPortal breeder-workspace access, and DogBreederDocs.Online document-workspace access
 - $39 per year for domain renewal, billed separately each year before renewal
 
 A connected domain is required for kennel-branded email addresses. The included non-premium `.com` supplies that domain when it is available. The annual $39 domain renewal is deliberately not represented as a parallel PayPal billing cycle inside the monthly subscription.
 
-Optional add-ons are not required to build, launch, host, or operate the website:
+Additional services:
 
 - Done-for-you personalization: $299 one time
 - Ground-up custom website: from $749
 - Business Voice: $69 setup, then $8.99/month or $99/year, plus usage
+
+## Connected platform
+
+The intended customer experience is one breeder identity across three connected product surfaces:
+
+- `dogbreederweb.site` — public website building, publishing, domain, email, and BreederWeb Designer
+- `mydogportal.site` — breeder operating system, dogs, litters, puppies, applications, families, balances, updates, scheduling, records, and Puppy Portals
+- `dogbreederdocs.online` — state-aware breeder documents, reusable masters, branding, clause editing, and buyer/puppy paperwork
+
+MyDogPortal is the authenticated operating hub. Website and document tools should be reachable from the same breeder account and should use the same breeder, puppy, family, and document records instead of requiring separate account creation or duplicated data entry.
 
 ## PayPal flow
 
@@ -72,4 +82,4 @@ npm run build
 
 ## Vercel production requirements
 
-The intended production project is the existing `roerts-projects/dbws` project, with the repository root as the Next.js root directory and `main` as the production branch. The project should be Git-connected to `rawillia9801/dbws`; production deployment protection should be disabled; `dogbreederweb.site` and `www.dogbreederweb.site` should both be attached; and the environment variables above should be project-level Production variables.
+The intended production project is `roerts-projects/dbws`, with the repository root as the Next.js root directory and `main` as the production branch. The project should be Git-connected to `rawillia9801/dbws`; production deployment protection should be disabled; `dogbreederweb.site` and `www.dogbreederweb.site` should both be attached; and the environment variables above should be project-level Production variables.
