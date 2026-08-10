@@ -6,7 +6,7 @@ const links = [
   ["AI Builder", "/#builder"],
   ["Features", "/#features"],
   ["Pricing", "/#pricing"],
-  ["Connected Web", "/#examples"],
+  ["Connected Platform", "/#connected"],
 ] as const;
 
 export function Header() {
