@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import type { CSSProperties } from "react";
 import "./globals.css";
+
+const fontVariables = {
+  "--font-display": 'Georgia, "Times New Roman"',
+  "--font-sans": 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI"',
+} as CSSProperties;
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dogbreederweb.site"),
@@ -26,7 +32,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" style={fontVariables}>
       <body>{children}</body>
     </html>
   );
