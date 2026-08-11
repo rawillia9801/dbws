@@ -4,7 +4,7 @@ export const websitePlan = {
   eyebrow: "Complete breeder website + companion workspace",
   setupFee: "149.00",
   monthlyPrice: "24.95",
-  domainRenewal: "39.00",
+  domainRenewal: "24.99",
   interval: "month",
   description: "A complete breeder website service with BreederWeb Designer, managed hosting, an included standard .com for the first year, two branded business email addresses, publishing, forms, embeds, mobile-ready pages, brand controls, version history, and an included MyDogPortal companion workspace for the breeder records that power the website. Cancel the website service at any time; the kennel remains the owner of its registered domain.",
   features: [

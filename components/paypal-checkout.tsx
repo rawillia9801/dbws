@@ -110,7 +110,7 @@ export function PayPalCheckout() {
           config.setupFee !== "149.00" ||
           config.monthlyPrice !== "24.95" ||
           config.setupFeeFailureAction.toUpperCase() !== "CANCEL" ||
-          config.annualDomainRenewal !== "39.00" ||
+          config.annualDomainRenewal !== "24.99" ||
           config.annualDomainRenewalBilling !== "separate"
         ) {
           throw new Error("The PayPal website plan does not match the published pricing.");
@@ -232,7 +232,7 @@ export function PayPalCheckout() {
         <CheckCircle2 size={22} />
         <div>
           <strong>{message}</strong>
-          <span>Your selected domain is part of your setup. The kennel owns the domain, and the website subscription can be canceled at any time. Standard renewal is $39/year after the first year.</span>
+          <span>Your selected domain is part of your setup. The kennel owns the domain, and the website subscription can be canceled at any time. Managed renewal is $24.99/year after the first year.</span>
           <Link href="/login?next=/builder">Continue to your breeder account →</Link>
         </div>
       </div>

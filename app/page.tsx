@@ -113,7 +113,7 @@ export default function Home() {
                 <Link className="button button-primary" href="#pricing">Start Your Website <Sparkles size={17} /></Link>
                 <Link className="button button-outline" href="/builder">Open BreederWeb Designer</Link>
               </div>
-              <p className="hero-note"><span>$149 setup</span><span>$24.95/month</span><span>$39/year domain renewal</span></p>
+              <p className="hero-note"><span>$149 setup</span><span>$24.95/month</span><span>$24.99/year managed domain renewal</span></p>
             </div>
             <BrowserPreview />
           </div>
@@ -246,8 +246,8 @@ export default function Home() {
                 <p className="pricing-description">Includes first-year registration of one available, non-premium .com.</p>
                 <div className="price"><strong>{formatPrice(websitePlan.monthlyPrice)}</strong><span>/ month</span></div>
                 <p className="pricing-description">{websitePlan.description}</p>
-                <div className="price"><strong>{formatPrice(websitePlan.domainRenewal)}</strong><span>/ year domain renewal</span></div>
-                <p className="pricing-description">The annual domain renewal is billed separately each year before renewal. It is not a second billing cycle inside the monthly PayPal subscription.</p>
+                <div className="price"><strong>{formatPrice(websitePlan.domainRenewal)}</strong><span>/ year managed domain renewal</span></div>
+                <p className="pricing-description">The annual managed domain renewal is billed separately each year before renewal. It is not a second billing cycle inside the monthly PayPal subscription.</p>
                 <ul>
                   {websitePlan.features.map((feature) => <li key={feature}><Check size={17} />{feature}</li>)}
                 </ul>
@@ -265,7 +265,7 @@ export default function Home() {
                     <div><dt>Monthly</dt><dd>$24.95 for the complete managed breeder website service</dd></div>
                     <div><dt>Included workspace</dt><dd>MyDogPortal companion access for applications, buyers, waitlist, breeding dogs, litters, and puppies</dd></div>
                     <div><dt>Upgrades</dt><dd>Professional and Studio remain available for advanced MyDogPortal workflows</dd></div>
-                    <div><dt>Domain renewal</dt><dd>$39/year, billed separately before renewal</dd></div>
+                    <div><dt>Managed domain renewal</dt><dd>$24.99/year, billed separately before renewal</dd></div>
                     <div><dt>Business email</dt><dd>Two domain-branded addresses with the connected domain</dd></div>
                   </dl>
                 </div>
