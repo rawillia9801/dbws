@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { generateText, Output, type ModelMessage } from "ai";
+import { generateText, Output } from "ai";
 import { NextResponse } from "next/server";
 import { finalizeDomainForUser } from "@/lib/domain-infrastructure";
 import { provisionIncludedMailboxes } from "@/lib/email-provisioning";
@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const DEFAULT_MODEL = "claude-sonnet-5";
+const MODEL_FALLBACKS = [DEFAULT_MODEL, "claude-sonnet-4-6"] as const;
 
 const systemPrompt = `You are BreederWeb Designer, the interactive website builder inside Dog Breeder Web.
 
@@ -35,7 +36,7 @@ If the breeder asks to design or redesign the website, make substantive configur
 
 function configuredModel() {
   const value = process.env.CLAUDE_SITE_BUILDER_MODEL?.trim();
-  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model") || value === "claude-sonnet-4-5") return DEFAULT_MODEL;
+  if (!value || /^your[_-]/i.test(value) || value.includes("server_side_model")) return DEFAULT_MODEL;
   return value;
 }
 
@@ -44,24 +45,49 @@ function configuredApiKey() {
   return value && !/^your[_-]/i.test(value) ? value : "";
 }
 
+function errorName(error: unknown) {
+  return error instanceof Error ? error.name : "";
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "";
+}
+
+function isModelAvailabilityError(error: unknown) {
+  if (errorName(error) === "AI_InvalidPromptError") return false;
+  const message = errorMessage(error);
+  return /model/i.test(message) && /(not found|unsupported|unavailable|does not exist|not available|invalid model|access to.*model|permission.*model)/i.test(message);
+}
+
 async function generateWebsite(model: string, prompt: string, currentConfig: unknown) {
-  const messages: ModelMessage[] = [
-    {
-      role: "system",
-      content: systemPrompt,
-      providerOptions: { anthropic: { cacheControl: { type: "ephemeral", ttl: "1h" } } },
-    },
-    {
-      role: "user",
-      content: `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`,
-    },
-  ];
   return generateText({
     model: anthropic(model),
-    messages,
+    system: systemPrompt,
+    prompt: `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`,
     output: Output.object({ schema: builderResponseSchema }),
     maxOutputTokens: 6000,
   });
+}
+
+async function generateWebsiteWithFallback(prompt: string, currentConfig: unknown) {
+  const requestedModel = configuredModel();
+  const candidates = [requestedModel, ...MODEL_FALLBACKS.filter((model) => model !== requestedModel)];
+  let lastError: unknown = null;
+
+  for (const model of candidates) {
+    try {
+      return { model, result: await generateWebsite(model, prompt, currentConfig) };
+    } catch (error) {
+      lastError = error;
+      if (!isModelAvailabilityError(error)) throw error;
+      console.warn("BreederWeb Designer model is unavailable; trying fallback", {
+        unavailableModel: model,
+        nextModel: candidates[candidates.indexOf(model) + 1] ?? null,
+      });
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("No supported BreederWeb Designer model is currently available.");
 }
 
 async function publishExistingSite(supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabaseClient>>>, userId: string, siteId: string | null | undefined, config: unknown) {
@@ -111,7 +137,7 @@ export async function POST(request: Request) {
 
   const parsed = builderRequestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Check the website details and try again." }, { status: 400 });
-  if (!configuredApiKey()) return NextResponse.json({ error: "BreederWeb Designer needs its Anthropic API key configured in the production environment." }, { status: 503 });
+  if (!configuredApiKey()) return NextResponse.json({ error: "BreederWeb Designer is temporarily unavailable because its AI service is not configured." }, { status: 503 });
 
   if (parsed.data.siteId) {
     const { data: ownedSite } = await supabase.from("breeder_sites").select("id").eq("id", parsed.data.siteId).eq("owner_id", authData.user.id).maybeSingle();
@@ -129,18 +155,7 @@ export async function POST(request: Request) {
   else trackedGeneration = true;
 
   try {
-    let model = requestedModel;
-    let result;
-    try {
-      result = await generateWebsite(model, parsed.data.prompt, parsed.data.currentConfig);
-    } catch (firstError) {
-      const message = firstError instanceof Error ? firstError.message : "";
-      if (model !== DEFAULT_MODEL && /model|not found|invalid|unsupported/i.test(message)) {
-        console.warn("Configured BreederWeb Designer model failed; retrying with supported default", { configuredModel: model });
-        model = DEFAULT_MODEL;
-        result = await generateWebsite(model, parsed.data.prompt, parsed.data.currentConfig);
-      } else throw firstError;
-    }
+    const { model, result } = await generateWebsiteWithFallback(parsed.data.prompt, parsed.data.currentConfig);
 
     const operationNotes: string[] = [];
     for (const action of result.output.actions || []) {
@@ -160,13 +175,14 @@ export async function POST(request: Request) {
       operationResults: operationNotes,
     });
   } catch (error) {
-    const errorCode = error instanceof Error ? error.name.slice(0, 100) : "unknown_error";
-    const errorMessage = error instanceof Error ? error.message : "";
-    console.error("BreederWeb Designer site generation failed", { generationId, errorCode, model: requestedModel, errorMessage });
+    const errorCode = errorName(error).slice(0, 100) || "unknown_error";
+    const message = errorMessage(error);
+    console.error("BreederWeb Designer site generation failed", { generationId, errorCode, model: requestedModel, errorMessage: message });
     if (trackedGeneration) await supabase.from("ai_site_generations").update({ status: "failed", error_code: errorCode, completed_at: new Date().toISOString() }).eq("id", generationId).eq("owner_id", authData.user.id);
-    if (/authentication|api key|unauthorized|401/i.test(errorMessage)) return NextResponse.json({ error: "BreederWeb Designer could not authenticate with the AI service. Check the production ANTHROPIC_API_KEY." }, { status: 503 });
-    if (/model|not found|invalid|unsupported/i.test(errorMessage)) return NextResponse.json({ error: `BreederWeb Designer could not use the configured model. The supported default is ${DEFAULT_MODEL}.` }, { status: 503 });
-    if (/rate|credit|balance|quota|429/i.test(errorMessage)) return NextResponse.json({ error: "BreederWeb Designer reached an AI usage limit. Check the Anthropic account balance or rate limit and try again." }, { status: 503 });
+    if (/authentication|api key|unauthorized|401/i.test(message)) return NextResponse.json({ error: "BreederWeb Designer could not connect to its AI service. Please try again shortly." }, { status: 503 });
+    if (isModelAvailabilityError(error)) return NextResponse.json({ error: "BreederWeb Designer's AI model is temporarily unavailable. Please try again shortly." }, { status: 503 });
+    if (/rate|credit|balance|quota|429/i.test(message)) return NextResponse.json({ error: "BreederWeb Designer is temporarily at its AI usage limit. Please try again shortly." }, { status: 503 });
+    if (errorName(error) === "AI_InvalidPromptError") return NextResponse.json({ error: "BreederWeb Designer hit an internal request-format error. Please try again shortly." }, { status: 502 });
     return NextResponse.json({ error: "BreederWeb Designer could not complete that website change. Please try again." }, { status: 502 });
   }
 }
