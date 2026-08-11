@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import { NextResponse } from "next/server";
 import { finalizeDomainForUser } from "@/lib/domain-infrastructure";
 import { provisionIncludedMailboxes } from "@/lib/email-provisioning";
@@ -32,7 +32,15 @@ You may request only these operations in the actions array:
 
 Do not claim an operation succeeded merely because you requested it. Your assistantMessage should say what you changed in the website content and, when actions are present, that you are carrying out the requested operation. The application will append the actual result after execution.
 
-If the breeder asks to design or redesign the website, make substantive configuration changes rather than only giving advice. If they ask for multiple reasonable content changes, perform all of them in one response. Summarize meaningful changes in plain language.`;
+If the breeder asks to design or redesign the website, make substantive configuration changes rather than only giving advice. If they ask for multiple reasonable content changes, perform all of them in one response. Summarize meaningful changes in plain language.
+
+OUTPUT CONTRACT
+Return only a valid JSON object with exactly these top-level fields: assistantMessage, changeSummary, config, and actions.
+- assistantMessage: a concise plain-language summary for the breeder.
+- changeSummary: an array of short strings describing meaningful edits.
+- config: the complete revised website configuration, preserving the same structure as the supplied current configuration.
+- actions: an array of zero or more allowed operations described above.
+Do not wrap the JSON in markdown fences and do not add text before or after the JSON.`;
 
 function configuredModel() {
   const value = process.env.CLAUDE_SITE_BUILDER_MODEL?.trim();
@@ -59,14 +67,58 @@ function isModelAvailabilityError(error: unknown) {
   return /model/i.test(message) && /(not found|unsupported|unavailable|does not exist|not available|invalid model|access to.*model|permission.*model)/i.test(message);
 }
 
-async function generateWebsite(model: string, prompt: string, currentConfig: unknown) {
+function extractJsonObject(text: string) {
+  const trimmed = text.trim();
+  const withoutFence = trimmed
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  try {
+    return JSON.parse(withoutFence) as unknown;
+  } catch {
+    const start = withoutFence.indexOf("{");
+    const end = withoutFence.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(withoutFence.slice(start, end + 1)) as unknown;
+    }
+    throw new Error("BreederWeb Designer returned a response that was not valid JSON.");
+  }
+}
+
+function validateBuilderOutput(text: string) {
+  const parsedJson = extractJsonObject(text);
+  const parsed = builderResponseSchema.safeParse(parsedJson);
+  if (parsed.success) return parsed.data;
+
+  const issueSummary = parsed.error.issues
+    .slice(0, 10)
+    .map((issue) => `${issue.path.join(".") || "response"}: ${issue.message}`)
+    .join("; ");
+
+  throw new Error(`BreederWeb Designer returned an invalid website configuration. ${issueSummary}`);
+}
+
+async function callDesignerModel(model: string, prompt: string) {
   return generateText({
     model: anthropic(model),
     system: systemPrompt,
-    prompt: `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`,
-    output: Output.object({ schema: builderResponseSchema }),
+    prompt,
     maxOutputTokens: 6000,
   });
+}
+
+async function generateWebsite(model: string, prompt: string, currentConfig: unknown) {
+  const requestPrompt = `Breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}`;
+  const first = await callDesignerModel(model, requestPrompt);
+
+  try {
+    return { output: validateBuilderOutput(first.text), usage: first.usage };
+  } catch (validationError) {
+    const repairPrompt = `Your previous response did not pass Dog Breeder Web's server-side validation. Return a corrected JSON object only.\n\nOriginal breeder request:\n${prompt}\n\nCurrent website configuration:\n${JSON.stringify(currentConfig)}\n\nValidation problem:\n${errorMessage(validationError)}\n\nPrevious response:\n${first.text}`;
+    const repaired = await callDesignerModel(model, repairPrompt);
+    return { output: validateBuilderOutput(repaired.text), usage: repaired.usage };
+  }
 }
 
 async function generateWebsiteWithFallback(prompt: string, currentConfig: unknown) {
@@ -148,8 +200,12 @@ export async function POST(request: Request) {
   const requestedModel = configuredModel();
   let trackedGeneration = false;
   const { error: generationError } = await supabase.from("ai_site_generations").insert({
-    id: generationId, site_id: parsed.data.siteId ?? null, owner_id: authData.user.id,
-    prompt: parsed.data.prompt, model: requestedModel, status: "pending",
+    id: generationId,
+    site_id: parsed.data.siteId ?? null,
+    owner_id: authData.user.id,
+    prompt: parsed.data.prompt,
+    model: requestedModel,
+    status: "pending",
   });
   if (generationError) console.warn("AI generation history could not be recorded; continuing with the website change", { code: generationError.code });
   else trackedGeneration = true;
@@ -159,15 +215,25 @@ export async function POST(request: Request) {
 
     const operationNotes: string[] = [];
     for (const action of result.output.actions || []) {
-      const note = await executeAction(action, { userId: authData.user.id, siteId: parsed.data.siteId, config: result.output.config, supabase });
+      const note = await executeAction(action, {
+        userId: authData.user.id,
+        siteId: parsed.data.siteId,
+        config: result.output.config,
+        supabase,
+      });
       if (note) operationNotes.push(note);
     }
 
     if (trackedGeneration) {
       await supabase.from("ai_site_generations").update({
-        status: "complete", model, result: result.output, token_usage: result.usage, completed_at: new Date().toISOString(),
+        status: "complete",
+        model,
+        result: result.output,
+        token_usage: result.usage,
+        completed_at: new Date().toISOString(),
       }).eq("id", generationId).eq("owner_id", authData.user.id);
     }
+
     return NextResponse.json({
       ...result.output,
       assistantMessage: [result.output.assistantMessage, ...operationNotes].filter(Boolean).join("\n\n"),
@@ -177,8 +243,21 @@ export async function POST(request: Request) {
   } catch (error) {
     const errorCode = errorName(error).slice(0, 100) || "unknown_error";
     const message = errorMessage(error);
-    console.error("BreederWeb Designer site generation failed", { generationId, errorCode, model: requestedModel, errorMessage: message });
-    if (trackedGeneration) await supabase.from("ai_site_generations").update({ status: "failed", error_code: errorCode, completed_at: new Date().toISOString() }).eq("id", generationId).eq("owner_id", authData.user.id);
+    console.error("BreederWeb Designer site generation failed", {
+      generationId,
+      errorCode,
+      model: requestedModel,
+      errorMessage: message,
+    });
+
+    if (trackedGeneration) {
+      await supabase.from("ai_site_generations").update({
+        status: "failed",
+        error_code: errorCode,
+        completed_at: new Date().toISOString(),
+      }).eq("id", generationId).eq("owner_id", authData.user.id);
+    }
+
     if (/authentication|api key|unauthorized|401/i.test(message)) return NextResponse.json({ error: "BreederWeb Designer could not connect to its AI service. Please try again shortly." }, { status: 503 });
     if (isModelAvailabilityError(error)) return NextResponse.json({ error: "BreederWeb Designer's AI model is temporarily unavailable. Please try again shortly." }, { status: 503 });
     if (/rate|credit|balance|quota|429/i.test(message)) return NextResponse.json({ error: "BreederWeb Designer is temporarily at its AI usage limit. Please try again shortly." }, { status: 503 });
