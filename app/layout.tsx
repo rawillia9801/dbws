@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import type { CSSProperties } from "react";
 import "./globals.css";
 
@@ -33,7 +34,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" style={fontVariables}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script src="https://dogbreederos.com/api/public/support/widget?site=dogbreederweb" strategy="afterInteractive" />
+      </body>
     </html>
   );
 }
